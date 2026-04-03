@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+html,
+body,
+#root,
+button,
+input,
+select,
+textarea {
+  font-variant-numeric: lining-nums tabular-nums;
+  font-feature-settings: "lnum" 1, "tnum" 1;
+}
+
+.table-scroll-area {
+  max-height: 520px;
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #c49a7a #f7eee9;
+}
+
+.table-scroll-area::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.table-scroll-area::-webkit-scrollbar-track {
+  background: #f7eee9;
+  border-radius: 999px;
+}
+
+.table-scroll-area::-webkit-scrollbar-thumb {
+  background: #c49a7a;
+  border: 2px solid #f7eee9;
+  border-radius: 999px;
+}
+
+.table-scroll-area::-webkit-scrollbar-thumb:hover {
+  background: #b48867;
+}
+
+.table-scroll-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
