@@ -1,7 +1,16 @@
 import React from 'react'
 import type { IAppointment } from '@/api/AppointmentsApi'
 import type { PaginationMeta } from '@/types'
-import { formatTime, getCustomerName, getStaffName, getServiceName, getServicePrice, statusConfig } from './appointmentUtils'
+import {
+  formatTime,
+  getAppointmentActions,
+  getCustomerName,
+  getStaffName,
+  getServiceName,
+  getServicePrice,
+  statusConfig,
+  type AppointmentActorRole,
+} from './appointmentUtils'
 import Pagination from '@/components/shared/Pagination'
 import { TableSkeleton } from '@/components/shared/Skeleton'
 import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from '@/utils/pagination'
@@ -11,8 +20,9 @@ interface AppointmentTableProps {
   loading?: boolean
   onCancel?: (id: string) => void
   onConfirm?: (id: string) => void
-  compact?: boolean // For admin/reports view
+  compact?: boolean
   showActions?: boolean
+  actorRole?: AppointmentActorRole
   pageSize?: number
   pagination?: PaginationMeta
   currentPage?: number
@@ -28,6 +38,7 @@ const AppointmentTable: React.FC<AppointmentTableProps> = ({
   onConfirm,
   compact = false,
   showActions = true,
+  actorRole = 'receptionist',
   pageSize = DEFAULT_PAGE_SIZE,
   pagination,
   currentPage: controlledPage,
@@ -86,10 +97,10 @@ const AppointmentTable: React.FC<AppointmentTableProps> = ({
 
   return (
     <div className="bg-white rounded-2xl border border-[#F0DDD5] shadow-[0_2px_16px_rgba(196,154,122,0.08)] overflow-hidden">
-      {/* Table header */}
-      <div className="table-scroll-head grid gap-4 px-6 py-3 bg-[#FDF6F2] border-b border-[#F0DDD5]" style={{
-        gridTemplateColumns: compact ? 'repeat(6, 1fr)' : 'repeat(8, 1fr)'
-      }}>
+      <div
+        className="table-scroll-head grid gap-4 px-6 py-3 bg-[#FDF6F2] border-b border-[#F0DDD5]"
+        style={{ gridTemplateColumns: compact ? 'repeat(6, 1fr)' : 'repeat(8, 1fr)' }}
+      >
         {columns.map(col => (
           <span key={col} className="text-[11px] font-bold text-[#aaa] uppercase tracking-[0.08em] font-serif">
             {col}
@@ -97,81 +108,80 @@ const AppointmentTable: React.FC<AppointmentTableProps> = ({
         ))}
       </div>
 
-      {/* Table rows */}
       <div className="table-scroll-area">
         {paginatedAppointments.map(apt => {
           const cfg = statusConfig[apt.status] || statusConfig.pending
+          const actions = getAppointmentActions(apt.status, actorRole)
+
           return (
             <div
               key={apt._id}
               className="grid gap-4 px-6 py-3.5 border-b border-[#F9F0EC] last:border-b-0 hover:bg-[#FDFAF8] transition-colors items-center"
               style={{ gridTemplateColumns: compact ? 'repeat(6, 1fr)' : 'repeat(8, 1fr)' }}
             >
-            {/* Customer */}
-            <div>
-              <p className="text-[13px] font-semibold text-[#2d2d2d] m-0 font-serif">{getCustomerName(apt.userID)}</p>
-            </div>
-
-            {/* Staff */}
-            <div>
-              <p className="text-[13px] text-[#666] m-0 font-serif">{getStaffName(apt.staffID)}</p>
-            </div>
-
-            {/* Service */}
-            <div>
-              <p className="text-[13px] text-[#666] m-0 font-serif capitalize">{getServiceName(apt.services)}</p>
-            </div>
-
-            {/* Price */}
-            {!compact && (
               <div>
-                <p className="text-[13px] font-semibold text-[#C49A7A] m-0 font-serif">Rs {getServicePrice(apt.services).toLocaleString()}</p>
+                <p className="text-[13px] font-semibold text-[#2d2d2d] m-0 font-serif">{getCustomerName(apt.userID)}</p>
               </div>
-            )}
 
-            {/* Date */}
-            <div>
-              <p className="text-[13px] text-[#666] m-0 font-serif">{formatDateShort(apt.appointmentDate)}</p>
-            </div>
-
-            {/* Time */}
-            <div>
-              <p className="text-[13px] text-[#666] m-0 font-serif">
-                {formatTime(apt.startTime)} - {formatTime(apt.endTime)}
-              </p>
-            </div>
-
-            {/* Status */}
-            <div>
-              <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full ${cfg.bg} ${cfg.text}`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
-                {cfg.label}
-              </span>
-            </div>
-
-            {/* Actions */}
-            {showActions && !compact && (
-              <div className="flex gap-1.5 items-center justify-end">
-                {onConfirm && apt.status === 'pending' && (
-                  <button
-                    onClick={() => onConfirm(apt._id)}
-                    className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-[#E8F5E9] text-[#4CAF50] border border-[#4CAF50]/30 cursor-pointer hover:bg-[#4CAF50] hover:text-white transition-all font-serif"
-                    title="Confirm appointment"
-                  >
-                    ✓
-                  </button>
-                )}
-                {onCancel && apt.status !== 'cancelled' && (
-                  <button
-                    onClick={() => onCancel(apt._id)}
-                    className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-[#FFEBEE] text-[#E74C3C] border border-[#E74C3C]/30 cursor-pointer hover:bg-[#E74C3C] hover:text-white transition-all font-serif"
-                    title="Cancel appointment"
-                  >
-                    ✕
-                  </button>
-                )}
+              <div>
+                <p className="text-[13px] text-[#666] m-0 font-serif">{getStaffName(apt.staffID)}</p>
               </div>
-            )}
+
+              <div>
+                <p className="text-[13px] text-[#666] m-0 font-serif capitalize">{getServiceName(apt.services)}</p>
+              </div>
+
+              {!compact && (
+                <div>
+                  <p className="text-[13px] font-semibold text-[#C49A7A] m-0 font-serif">Rs {getServicePrice(apt.services).toLocaleString()}</p>
+                </div>
+              )}
+
+              <div>
+                <p className="text-[13px] text-[#666] m-0 font-serif">{formatDateShort(apt.appointmentDate)}</p>
+              </div>
+
+              <div>
+                <p className="text-[13px] text-[#666] m-0 font-serif">
+                  {formatTime(apt.startTime)} - {formatTime(apt.endTime)}
+                </p>
+              </div>
+
+              <div>
+                <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full ${cfg.bg} ${cfg.text}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+                  {cfg.label}
+                </span>
+              </div>
+
+              {showActions && !compact && (
+                <div className="flex gap-1.5 items-center justify-end">
+                  {onConfirm && actions.canConfirm && (
+                    <button
+                      onClick={() => onConfirm(apt._id)}
+                      className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-[#E8F5E9] text-[#4CAF50] border border-[#4CAF50]/30 cursor-pointer hover:bg-[#4CAF50] hover:text-white transition-all font-serif"
+                      title="Confirm appointment"
+                    >
+                      Confirm
+                    </button>
+                  )}
+                  {onCancel && actions.canCancel && (
+                    <button
+                      onClick={() => onCancel(apt._id)}
+                      className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-[#FFEBEE] text-[#E74C3C] border border-[#E74C3C]/30 cursor-pointer hover:bg-[#E74C3C] hover:text-white transition-all font-serif"
+                      title="Cancel appointment"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                  {!actions.canConfirm && !actions.canCancel && actions.isReadOnly && (
+                    <span className="text-[11px] font-semibold text-[#9AA7B8] font-serif">Read only</span>
+                  )}
+                  {!actions.canConfirm && !actions.canCancel && !actions.isReadOnly && (
+                    <span className="text-[11px] font-semibold text-[#B8AAA2] font-serif">No actions</span>
+                  )}
+                </div>
+              )}
             </div>
           )
         })}
@@ -191,9 +201,9 @@ const AppointmentTable: React.FC<AppointmentTableProps> = ({
   )
 }
 
-// Short date formatter helper
 function formatDateShort(dateStr: string): string {
   if (!dateStr) return '--'
+
   try {
     const date = new Date(dateStr)
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })

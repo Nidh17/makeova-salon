@@ -12,6 +12,21 @@ import Leave from "../model/leave.schema.js";
 import paginationHelper from "../helper/pagination.helper.js";
 
 class AppointmentFactory {
+    private async getAppointmentOrThrow(id: string) {
+        const existingAppointment = await appointment.findById(id);
+
+        if (!existingAppointment) {
+            throw AppError.notFound("Appointment not found");
+        }
+
+        return existingAppointment;
+    }
+
+    private ensureAppointmentIsEditable(existingAppointment: { status: string }) {
+        if (existingAppointment.status === "completed") {
+            throw AppError.conflict("Completed appointments cannot be modified");
+        }
+    }
 
     public async createAppointment(data: ICreateAppointment) {
         try {
@@ -184,19 +199,14 @@ public async getAppointmentsByDate(
 
 public async updateAppointmentStatus(id: string, status: string) {
   try {
+    const existingAppointment = await this.getAppointmentOrThrow(id);
+    this.ensureAppointmentIsEditable(existingAppointment);
+
     const updatedAppointment = await appointment.findByIdAndUpdate(
       id,
       { status },
       { new: true }
     );
-
-    if (!updatedAppointment) {
-      return await ResponseHandler.sendResponse(
-        Responsecodes.NOT_FOUND,
-        "Appointment not found",
-        null
-      );
-    }
 
     return await ResponseHandler.sendResponse(
       Responsecodes.OK,
@@ -211,6 +221,9 @@ public async updateAppointmentStatus(id: string, status: string) {
 
     public async updateAppointment(id: string, data: IUpdateAppointment) {
         try {
+            const existingAppointment = await this.getAppointmentOrThrow(id);
+            this.ensureAppointmentIsEditable(existingAppointment);
+
             const updated = await appointment.findByIdAndUpdate(
                 id,
                 data,
@@ -234,6 +247,9 @@ public async updateAppointmentStatus(id: string, status: string) {
 
     public async deleteAppointment(id: string) {
         try {
+            const existingAppointment = await this.getAppointmentOrThrow(id);
+            this.ensureAppointmentIsEditable(existingAppointment);
+
             const deleted = await appointment.findByIdAndDelete(id);
 
             if (!deleted) {

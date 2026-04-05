@@ -112,6 +112,7 @@ const ReceptionistBooking: React.FC = () => {
         onCancel={cancelAppt}
         onConfirm={confirmAppt}
         showActions={true}
+        actorRole="receptionist"
         pageSize={pageSize}
         pagination={pagination}
         currentPage={currentPage}

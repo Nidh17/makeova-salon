@@ -144,6 +144,7 @@ const ReceptionistSchedule: React.FC = () => {
         onCancel={cancelAppt}
         onConfirm={confirmAppt}
         showActions={true}
+        actorRole="receptionist"
       />
 
       {/* Book Appointment Modal */}

@@ -1,6 +1,8 @@
 import type { IAppointment, ILeave } from '@/api/AppointmentsApi'
 import type { IUser } from '@/types'
 
+export type AppointmentActorRole = 'admin' | 'receptionist'
+
 export const WORKING_DAY_OPTIONS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const
 
 export const WORKING_DAY_LABELS: Record<(typeof WORKING_DAY_OPTIONS)[number], string> = {
@@ -18,6 +20,33 @@ export const statusConfig = {
   confirmed: { label: 'Confirmed', bg: 'bg-[#E8F5E9]', text: 'text-[#4CAF50]', dot: 'bg-[#4CAF50]' },
   completed: { label: 'Completed', bg: 'bg-[#E3F2FD]', text: 'text-[#1565C0]', dot: 'bg-[#1565C0]' },
   cancelled: { label: 'Cancelled', bg: 'bg-[#FFEBEE]', text: 'text-[#E53935]', dot: 'bg-[#E53935]' },
+}
+
+export const getAppointmentActions = (
+  status: IAppointment['status'],
+  role: AppointmentActorRole
+): { canConfirm: boolean; canCancel: boolean; isReadOnly: boolean } => {
+  if (status === 'completed') {
+    return { canConfirm: false, canCancel: false, isReadOnly: true }
+  }
+
+  if (role === 'admin') {
+    if (status === 'pending') {
+      return { canConfirm: true, canCancel: true, isReadOnly: false }
+    }
+
+    if (status === 'confirmed') {
+      return { canConfirm: false, canCancel: true, isReadOnly: false }
+    }
+  }
+
+  if (role === 'receptionist') {
+    if (status === 'pending') {
+      return { canConfirm: true, canCancel: true, isReadOnly: false }
+    }
+  }
+
+  return { canConfirm: false, canCancel: false, isReadOnly: false }
 }
 
 export const getCustomerName = (userID: IAppointment['userID']): string =>
