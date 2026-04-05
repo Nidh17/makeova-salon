@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import AdminLayout from '../admin/AdminLayout'
-import { AppointmentStatus, deleteAppointment, formatDate, formatTime, getAllAppointments, getField, IAppointment, STATUS_STYLE, updateAppointmentStatus } from '@/api/AppointmentsApi'
+import { AppointmentStatus, formatDate, formatTime, getAllAppointments, getField, IAppointment, STATUS_STYLE, updateAppointmentStatus } from '@/api/AppointmentsApi'
 import StaffAvailabilityTable from './staffaviablitytable'
 import BookAppointmentForm from './AppointmentForm'
 import Pagination from '@/components/shared/Pagination'
@@ -8,6 +8,7 @@ import { SkeletonBlock, StatCardSkeletons, TableSkeleton } from '@/components/sh
 import type { PaginationMeta } from '@/types'
 import { createEmptyPagination, DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from '@/utils/pagination'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
+import { getAppointmentActions } from './appointmentUtils'
 
 const EMPTY_PAGINATION: PaginationMeta = createEmptyPagination()
 
@@ -89,17 +90,6 @@ const AppointmentCalendar: React.FC = () => {
       showToast(`Appointment ${status}!`)
     } catch (err) {
       showToast(err instanceof Error ? err.message : 'Failed to update', 'error')
-    }
-  }
-
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Delete this appointment?')) return
-    try {
-      await deleteAppointment(id)
-      setAppointments(prev => prev.filter(a => a._id !== id))
-      showToast('Appointment deleted!')
-    } catch (err) {
-      showToast(err instanceof Error ? err.message : 'Failed to delete', 'error')
     }
   }
 
@@ -285,6 +275,7 @@ const AppointmentCalendar: React.FC = () => {
               <div className="table-scroll-area">
                 {visibleAppointments.map(apt => {
                   const st = STATUS_STYLE[apt.status]
+                  const actions = getAppointmentActions(apt.status, 'admin')
                   return (
                     <div key={apt._id} className="grid items-center px-6 py-4 border-b border-[#F9F0EC] last:border-b-0 hover:bg-[#FDFAF8] transition-colors" style={{ gridTemplateColumns: '1fr 1fr 1fr 130px 110px 110px 120px' }}>
                   <div>
@@ -315,41 +306,37 @@ const AppointmentCalendar: React.FC = () => {
                   </div>
 
                   <div>
-                    <select
-                      value={apt.status}
-                      onChange={e => handleStatusChange(apt._id, e.target.value as AppointmentStatus)}
-                      className={`text-[11px] font-semibold px-2 py-1 rounded-lg border-none cursor-pointer outline-none capitalize font-serif ${st.bg} ${st.text}`}
-                    >
-                      {(['pending', 'confirmed', 'completed', 'cancelled'] as AppointmentStatus[]).map(s => (
-                        <option key={s} value={s}>{s}</option>
-                      ))}
-                    </select>
+                    <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full capitalize font-serif ${st.bg} ${st.text}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`} />
+                      {apt.status}
+                    </span>
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handleStatusChange(apt._id, 'confirmed')}
-                      disabled={apt.status === 'confirmed' || apt.status === 'completed'}
-                      title="Confirm"
-                      className="w-7 h-7 rounded-lg bg-[#E8F5E9] flex items-center justify-center border-none cursor-pointer hover:bg-[#C8E6C9] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                    >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4CAF50" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12" /></svg>
-                    </button>
-                    <button
-                      onClick={() => handleStatusChange(apt._id, 'cancelled')}
-                      disabled={apt.status === 'cancelled' || apt.status === 'completed'}
-                      title="Cancel"
-                      className="w-7 h-7 rounded-lg bg-[#FFEBEE] flex items-center justify-center border-none cursor-pointer hover:bg-[#FFCDD2] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                    >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#E53935" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
-                    </button>
-                    <button
-                      onClick={() => handleDelete(apt._id)}
-                      title="Delete"
-                      className="w-7 h-7 rounded-lg bg-[#F5F5F5] flex items-center justify-center border-none cursor-pointer hover:bg-[#E0E0E0] transition-colors"
-                    >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2" strokeLinecap="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" /></svg>
-                    </button>
+                    {actions.canConfirm && (
+                      <button
+                        onClick={() => handleStatusChange(apt._id, 'confirmed')}
+                        title="Confirm"
+                        className="rounded-lg bg-[#E8F5E9] px-2.5 py-1.5 text-[11px] font-semibold text-[#4CAF50] border border-[#4CAF50]/30 cursor-pointer hover:bg-[#4CAF50] hover:text-white transition-all font-serif"
+                      >
+                        Confirm
+                      </button>
+                    )}
+                    {actions.canCancel && (
+                      <button
+                        onClick={() => handleStatusChange(apt._id, 'cancelled')}
+                        title="Cancel"
+                        className="rounded-lg bg-[#FFEBEE] px-2.5 py-1.5 text-[11px] font-semibold text-[#E53935] border border-[#E53935]/30 cursor-pointer hover:bg-[#E53935] hover:text-white transition-all font-serif"
+                      >
+                        Cancel
+                      </button>
+                    )}
+                    {!actions.canConfirm && !actions.canCancel && actions.isReadOnly && (
+                      <span className="text-[11px] font-semibold text-[#9AA7B8] font-serif">Read only</span>
+                    )}
+                    {!actions.canConfirm && !actions.canCancel && !actions.isReadOnly && (
+                      <span className="text-[11px] font-semibold text-[#B8AAA2] font-serif">No actions</span>
+                    )}
                   </div>
                     </div>
                   )

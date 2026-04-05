@@ -292,7 +292,8 @@ const BookAppointmentForm: React.FC<BookAppointmentFormProps> = ({ onSuccess, on
   const availableStaff = useMemo(() => {
     return staffList.filter(staff => {
       if (!date) return true
-      if (!isWorkingOnDate(staff, date)) return false
+      const hasWorkingDays = Array.isArray(staff.WorkingDay) ? staff.WorkingDay.length > 0 : Boolean(staff.WorkingDay)
+      if (hasWorkingDays && !isWorkingOnDate(staff, date)) return false
       if (isOnLeave(staff._id, date, leaves)) return false
       return true
     })

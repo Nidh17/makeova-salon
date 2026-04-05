@@ -440,6 +440,7 @@ const ReceptionistDashboard: React.FC = () => {
           onCancel={cancelAppt}
           onConfirm={confirmAppt}
           showActions={true}
+          actorRole="receptionist"
           pageSize={10}
         />
       </div>
