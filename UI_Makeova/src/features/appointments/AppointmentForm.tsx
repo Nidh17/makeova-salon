@@ -11,7 +11,7 @@ import {
   type IAppointment,
   type ILeave,
 } from '@/api/AppointmentsApi'
-import { filterUsersByRole, getAllUsers } from '@/api/Userapi'
+import { getAllUsers } from '@/api/Userapi'
 import { getBookedCount, getWorkingDayLabel, hasConflict, hasCustomerConflict, isOnLeave, isPastSlot, isWorkingOnDate } from './appointmentUtils'
 
 interface BookAppointmentFormProps {
@@ -242,26 +242,29 @@ const BookAppointmentForm: React.FC<BookAppointmentFormProps> = ({ onSuccess, on
       setApiErr('')
 
       try {
-        const [allUsers, serviceList, allAppointments, leaveList] = await Promise.all([
+        const [allUsers, staffUsers, serviceList, allAppointments, leaveList] = await Promise.all([
           getAllUsers({ page: 1, limit: 500 }),
+          getAllUsers({ page: 1, limit: 500, role: 'staff' }),
           getAllServices({ page: 1, limit: 500 }),
           getAllAppointments({ page: 1, limit: 1000 }),
           getAllLeaves({ page: 1, limit: 500 }),
         ])
 
-        const customerList = filterUsersByRole(allUsers.items, 'customer')
-        const staffUsers = filterUsersByRole(allUsers.items, 'staff').filter(user => user.isAvailable)
+        const customerList = allUsers.items.filter(user =>
+          user.role.some(role => typeof role !== 'string' && role.name?.toLowerCase() === 'customer')
+        )
+        const activeStaffUsers = staffUsers.items.filter(user => user.isAvailable)
 
         if (cancelled) return
 
         setCustomers(customerList)
-        setStaffList(staffUsers)
+        setStaffList(activeStaffUsers)
         setServices(serviceList.items.filter(service => service.isActive))
         setAppointments(allAppointments.items)
         setLeaves(leaveList.items)
 
         if (preStaffId) {
-          const matchedStaff = staffUsers.find(staff => staff._id === preStaffId)
+          const matchedStaff = activeStaffUsers.find(staff => staff._id === preStaffId)
           if (matchedStaff) {
             setStaffId(matchedStaff._id)
             setStaffQuery(matchedStaff.name)
@@ -290,10 +293,10 @@ const BookAppointmentForm: React.FC<BookAppointmentFormProps> = ({ onSuccess, on
   }, [preStaffId])
 
   const availableStaff = useMemo(() => {
+    if (!date) return []
+
     return staffList.filter(staff => {
-      if (!date) return true
-      const hasWorkingDays = Array.isArray(staff.WorkingDay) ? staff.WorkingDay.length > 0 : Boolean(staff.WorkingDay)
-      if (hasWorkingDays && !isWorkingOnDate(staff, date)) return false
+      if (!isWorkingOnDate(staff, date)) return false
       if (isOnLeave(staff._id, date, leaves)) return false
       return true
     })
@@ -307,6 +310,12 @@ const BookAppointmentForm: React.FC<BookAppointmentFormProps> = ({ onSuccess, on
     if (!serviceId) nextErrors.serviceId = 'Select a service'
     if (!date) nextErrors.date = 'Select an appointment date'
     if (!slot) nextErrors.slot = 'Select a time slot'
+    if (staffId && date) {
+      const selectedProvider = staffList.find(staff => staff._id === staffId)
+      if (selectedProvider && !isWorkingOnDate(selectedProvider, date)) {
+        nextErrors.staffId = 'This provider is on weekly off for the selected date'
+      }
+    }
     if (date && slot && isPastSlot(date, slot)) nextErrors.slot = 'This time slot has already passed'
     if (customerId && date && slot && duration > 0 && hasCustomerConflict(customerId, date, slot, appointments, duration)) {
       nextErrors.slot = 'This customer already has another appointment at this time'
@@ -456,9 +465,15 @@ const BookAppointmentForm: React.FC<BookAppointmentFormProps> = ({ onSuccess, on
               setSlot('')
               setErrors(prev => ({ ...prev, date: '' }))
 
-              if (staffId && nextDate && isOnLeave(staffId, nextDate, leaves)) {
-                setStaffId('')
-                setStaffQuery('')
+              if (staffId && nextDate) {
+                const selectedProvider = staffList.find(staff => staff._id === staffId)
+                const providerOnLeave = isOnLeave(staffId, nextDate, leaves)
+                const providerOffDay = selectedProvider ? !isWorkingOnDate(selectedProvider, nextDate) : false
+
+                if (providerOnLeave || providerOffDay) {
+                  setStaffId('')
+                  setStaffQuery('')
+                }
               }
             }}
             className={inputClass(errors.date)}

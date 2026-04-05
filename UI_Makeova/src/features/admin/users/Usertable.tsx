@@ -316,7 +316,9 @@ const UserTable: React.FC<UserTableProps> = ({ roleType, Layout }) => {
             {/* Name */}
             <div className="pr-3">
               <p className="text-[13px] font-bold text-[#2d2d2d] m-0 font-serif truncate">{u.name}</p>
-              {u.WorkingDay && <p className="text-[10px] text-[#aaa] m-0">{getWorkingDayLabel(u.WorkingDay)}</p>}
+              {roleType === 'staff' && u.WorkingDay && (
+                <p className="text-[10px] text-[#aaa] m-0">{getWorkingDayLabel(u.WorkingDay)}</p>
+              )}
             </div>
 
             {/* Email */}

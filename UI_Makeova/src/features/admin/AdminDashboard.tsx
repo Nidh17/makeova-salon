@@ -86,27 +86,25 @@ const AdminDashboard: React.FC = () => {
     setError('')
 
     try {
-      const [appointments, users, services, leaves] = await Promise.all([
+      const [appointments, users, services, leaves, staffUsers] = await Promise.all([
         getAllAppointments({ page: 1, limit: 10 }),
         getAllUsers({ page: 1, limit: 10 }),
         getAllServices({ page: 1, limit: 10 }),
         getAllLeaves({ page: 1, limit: 100 }),
+        getAllUsers({ page: 1, limit: 500, role: 'staff' }),
       ])
 
       const appointmentItems = appointments.items
       const userItems = users.items
       const serviceItems = services.items
       const leaveItems = leaves.items
+      const allStaffItems = staffUsers.items
 
       const userLookup = new Map(userItems.map(user => [user._id, user]))
 
       const today = new Date().toDateString()
       const thisMonth = new Date().getMonth()
       const thisYear = new Date().getFullYear()
-
-      const staffList = userItems.filter(user =>
-        user.role.some(role => typeof role !== 'string' && role.name?.toLowerCase() === 'staff')
-      )
 
       const staffOnLeave = leaveItems.filter(leave => {
         const leaveDate = new Date(leave.date).toDateString()
@@ -162,7 +160,7 @@ const AdminDashboard: React.FC = () => {
         todayAppointments,
         totalRevenue,
         monthRevenue,
-        activeStaff: staffList.filter(staff => staff.isAvailable).length,
+        activeStaff: allStaffItems.filter(staff => staff.isAvailable).length,
         staffOnLeave,
         totalServices: serviceItems.length,
         pendingCount,
