@@ -149,12 +149,20 @@ public async getMe(userId: string) {
     public async logout(token: any) {
         try {
             if (!token) {
-                throw AppError.badRequest("Token is required")
+                return await ResponseHandler.sendResponse(
+                    Responsecodes.OK,
+                    "User logged out successfully",
+                    null
+                )
             }
 
             const tokenDB = await session.findOne({ refreshToken: token });
             if (!tokenDB) {
-                throw AppError.notFound("No session found for this token")
+                return await ResponseHandler.sendResponse(
+                    Responsecodes.OK,
+                    "User logged out successfully",
+                    null
+                )
             }
 
             await session.deleteOne({ refreshToken: token });

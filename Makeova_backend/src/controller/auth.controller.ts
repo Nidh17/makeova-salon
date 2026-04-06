@@ -79,6 +79,8 @@ class AuthController {
             const token =
                 req.cookies.refreshToken ||
                 (req.body as Partial<IRefreshTokenRequest>)?.refreshToken ||
+                (req.body as { refresh_token?: string })?.refresh_token ||
+                (req.body as { token?: string })?.token ||
                 this.extractBearerToken(req.headers.authorization)
             const result = await authService.logout(token)
 
