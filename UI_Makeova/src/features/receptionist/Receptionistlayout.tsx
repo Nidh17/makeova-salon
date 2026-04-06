@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
-import authService        from '../../api/authService'
+import authService from '../../api/authService'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { useAppDispatch } from '@/store'
-import { logout } from '@/store/slices/authSlice'
+import { useAppDispatch, useAppSelector } from '@/store'
+import { logout, selectUser } from '@/store/slices/authSlice'
 
 interface ReceptionistLayoutProps {
   children: React.ReactNode
@@ -65,10 +65,21 @@ const navItems = [
   },
 ]
 
+const shellStyles = {
+  background: 'linear-gradient(180deg, #f7eff2 0%, #f1e5eb 56%, #eadbe3 100%)',
+  accent: '#9b5c74',
+  accentSoft: '#ead4dd',
+  border: '#e3cfd8',
+  text: '#2b1f26',
+  muted: '#7f6670',
+  sidebar: 'linear-gradient(180deg, #37222c 0%, #24151c 100%)',
+}
+
 const ReceptionistLayout: React.FC<ReceptionistLayoutProps> = ({ children }) => {
   const navigate = useNavigate()
-  const dispatch  = useAppDispatch()
+  const dispatch = useAppDispatch()
   const location = useLocation()
+  const user = useAppSelector(selectUser)
   const [collapsed, setCollapsed] = useState(false)
 
   const handleLogout = async () => {
@@ -81,27 +92,89 @@ const ReceptionistLayout: React.FC<ReceptionistLayoutProps> = ({ children }) => 
   }
 
   return (
-    <div className="flex min-h-screen bg-[#FDF6F2] font-serif">
+    <div
+      style={{
+        display: 'flex',
+        minHeight: '100vh',
+        background: shellStyles.background,
+        color: shellStyles.text,
+        fontFamily: '"Georgia", "Times New Roman", serif',
+        position: 'relative',
+        overflow: 'hidden',
+      }}
+    >
+      <div
+        style={{
+          position: 'fixed',
+          inset: 0,
+          pointerEvents: 'none',
+          background: 'radial-gradient(circle at top left, rgba(255,255,255,0.34) 0%, rgba(255,255,255,0) 38%), radial-gradient(circle at bottom right, rgba(132,88,111,0.06) 0%, rgba(132,88,111,0) 30%)',
+        }}
+      />
 
-      {/* ── Sidebar ── */}
       <aside
-        className={`fixed top-0 left-0 bottom-0 z-[100] flex flex-col bg-white border-r border-[#F0DDD5] shadow-[2px_0_12px_rgba(196,154,122,0.07)] transition-all duration-[250ms] ease-in-out flex-shrink-0 ${collapsed ? 'w-16' : 'w-[220px]'}`}
+        style={{
+          width: collapsed ? 84 : 264,
+          background: shellStyles.sidebar,
+          borderRight: '1px solid rgba(236,216,204,0.14)',
+          display: 'flex',
+          flexDirection: 'column',
+          transition: 'width 0.25s ease',
+          flexShrink: 0,
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          bottom: 0,
+          zIndex: 100,
+          boxShadow: '0 24px 60px rgba(31,16,10,0.28)',
+          overflow: 'hidden',
+        }}
       >
-        {/* Logo */}
-        <div className={`h-16 flex items-center border-b border-[#F0DDD5] ${collapsed ? 'justify-center px-0' : 'justify-between px-5'}`}>
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'linear-gradient(180deg, rgba(255,255,255,0.05), transparent 30%)',
+            pointerEvents: 'none',
+          }}
+        />
+
+        <div
+          style={{
+            minHeight: 96,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: collapsed ? 'center' : 'space-between',
+            padding: collapsed ? '0 10px' : '0 22px',
+            borderBottom: '1px solid rgba(236,216,204,0.12)',
+            position: 'relative',
+            zIndex: 1,
+          }}
+        >
           {!collapsed && (
-            <div>
-              <span className="block text-[13px] font-bold tracking-[0.2em] uppercase text-[#C49A7A]">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.28em', textTransform: 'uppercase', color: '#e9d2db', fontFamily: '"Inter", system-ui, sans-serif' }}>
                 Makeova
               </span>
-              <span className="text-[9px] text-[#bbb] tracking-[0.1em] uppercase">
-                Receptionist
+              <span style={{ fontSize: 20, lineHeight: 1, color: '#fff7f2', fontWeight: 700 }}>
+                Reception Desk
               </span>
             </div>
           )}
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className="bg-transparent border-none cursor-pointer text-[#C49A7A] p-1"
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 999,
+              background: 'rgba(255,248,241,0.08)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              cursor: 'pointer',
+              color: '#e9d2db',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
               <line x1="3" y1="12" x2="21" y2="12" />
@@ -111,8 +184,7 @@ const ReceptionistLayout: React.FC<ReceptionistLayoutProps> = ({ children }) => 
           </button>
         </div>
 
-        {/* Nav */}
-        <nav className="flex-1 py-4">
+        <nav style={{ flex: 1, padding: '12px 0 18px', position: 'relative', zIndex: 1 }}>
           {navItems.map(({ label, path, icon }) => {
             const active = location.pathname === path
             return (
@@ -120,26 +192,80 @@ const ReceptionistLayout: React.FC<ReceptionistLayoutProps> = ({ children }) => 
                 key={path}
                 onClick={() => navigate(path)}
                 title={collapsed ? label : ''}
-                className={`w-full flex items-center gap-3 text-[13px] tracking-[0.02em] font-serif transition-all duration-[180ms] whitespace-nowrap overflow-hidden border-none cursor-pointer
-                  ${collapsed ? 'justify-center px-0 py-3' : 'justify-start px-5 py-3'}
-                  ${active
-                    ? 'bg-[#FDF0EB] text-[#C49A7A] border-l-[3px] border-[#C49A7A]'
-                    : 'bg-transparent text-[#888] border-l-[3px] border-transparent hover:bg-[#FDF6F2] hover:text-[#C49A7A]'
-                  }`}
+                style={{
+                  width: 'calc(100% - 20px)',
+                  margin: '0 10px 8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  padding: collapsed ? '14px 0' : '14px 18px',
+                  justifyContent: collapsed ? 'center' : 'flex-start',
+                  background: active ? 'linear-gradient(135deg, rgba(233,210,219,0.24), rgba(255,255,255,0.08))' : 'transparent',
+                  border: active ? '1px solid rgba(233,210,219,0.14)' : '1px solid transparent',
+                  borderRadius: 16,
+                  cursor: 'pointer',
+                  color: active ? '#fff7f8' : '#d8c0ca',
+                  fontSize: 13,
+                  letterSpacing: '0.02em',
+                  fontFamily: '"Inter", system-ui, sans-serif',
+                  fontWeight: active ? 600 : 500,
+                  transition: 'all 0.18s',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  boxShadow: active ? '0 10px 24px rgba(0,0,0,0.16)' : 'none',
+                }}
+                onMouseEnter={e => {
+                  if (!active) {
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.05)'
+                    e.currentTarget.style.color = '#fff0e7'
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (!active) {
+                    e.currentTarget.style.background = 'transparent'
+                    e.currentTarget.style.color = '#d8c0ca'
+                  }
+                }}
               >
-                {icon}
+                <span style={{ color: active ? '#efd7df' : '#c89faf' }}>{icon}</span>
                 {!collapsed && <span>{label}</span>}
               </button>
             )
           })}
         </nav>
 
-        {/* Logout */}
-        <div className="py-4 border-t border-[#F0DDD5]">
+        <div style={{ padding: '18px 16px 20px', borderTop: '1px solid rgba(236,216,204,0.12)', position: 'relative', zIndex: 1 }}>
+          {!collapsed && (
+            <div
+              style={{
+                padding: '14px 16px',
+                borderRadius: 20,
+                background: 'rgba(255,248,241,0.08)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                marginBottom: 12,
+              }}
+            >
+              <p style={{ margin: 0, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#bc97a7', fontFamily: '"Inter", system-ui, sans-serif' }}>Desk Account</p>
+              <p style={{ margin: '7px 0 0', fontSize: 15, color: '#fff7f2', fontWeight: 700 }}>{user?.name ?? 'Receptionist'}</p>
+            </div>
+          )}
           <button
             onClick={handleLogout}
-            className={`w-full flex items-center gap-3 bg-transparent border-none cursor-pointer text-[#bbb] text-[13px] font-serif transition-colors duration-[180ms] hover:text-[#C49A7A]
-              ${collapsed ? 'justify-center px-0 py-3' : 'justify-start px-5 py-3'}`}
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              padding: collapsed ? '12px 0' : '12px 16px',
+              justifyContent: collapsed ? 'center' : 'flex-start',
+              background: 'rgba(255,248,241,0.08)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: 16,
+              cursor: 'pointer',
+              color: '#e9d2db',
+              fontSize: 13,
+              fontFamily: '"Inter", system-ui, sans-serif',
+            }}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
@@ -151,24 +277,106 @@ const ReceptionistLayout: React.FC<ReceptionistLayoutProps> = ({ children }) => 
         </div>
       </aside>
 
-      {/* ── Main ── */}
       <main
-        className={`flex flex-1 flex-col min-h-screen transition-all duration-[250ms] ease-in-out ${collapsed ? 'ml-16' : 'ml-[220px]'}`}
+        style={{
+          flex: 1,
+          marginLeft: collapsed ? 84 : 264,
+          transition: 'margin-left 0.25s ease',
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          position: 'relative',
+          zIndex: 1,
+        }}
       >
-        {/* Top bar */}
-        <header className="h-16 bg-white border-b border-[#F0DDD5] flex items-center justify-between px-8 sticky top-0 z-50">
-          <span className="text-[12px] text-[#C49A7A] bg-[#FDF0EB] px-[14px] py-1 rounded-full tracking-[0.06em]">
-            Receptionist Portal
-          </span>
-          <div className="flex items-center gap-2.5">
-            <div className="w-[34px] h-[34px] rounded-full bg-[#F5C8BC] flex items-center justify-center text-[13px] text-[#C49A7A] font-bold font-serif">
-              R
+        <header
+          style={{
+            height: 82,
+            background: 'rgba(248,240,244,0.9)',
+            backdropFilter: 'blur(20px)',
+            borderBottom: `1px solid ${shellStyles.border}`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '0 34px',
+            gap: 16,
+            position: 'sticky',
+            top: 0,
+            zIndex: 50,
+          }}
+        >
+          <div>
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                fontSize: 11,
+                color: shellStyles.accent,
+                background: shellStyles.accentSoft,
+                padding: '8px 14px',
+                borderRadius: 999,
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+                fontWeight: 700,
+                fontFamily: '"Inter", system-ui, sans-serif',
+              }}
+            >
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: shellStyles.accent }} />
+              Receptionist Portal
+            </span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{ textAlign: 'right' }}>
+              <p style={{ margin: 0, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: shellStyles.muted, fontFamily: '"Inter", system-ui, sans-serif' }}>Guest Care</p>
+              <p style={{ margin: '4px 0 0', fontSize: 14, color: shellStyles.text, fontWeight: 700 }}>{user?.name ?? 'Receptionist'}</p>
             </div>
-            <span className="text-[13px] text-[#888] font-serif">Receptionist</span>
+            <div
+              style={{
+                width: 42,
+                height: 42,
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #c894aa, #9b5c74)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 14,
+                color: '#fff8f3',
+                fontWeight: 700,
+                boxShadow: '0 8px 18px rgba(155,92,116,0.22)',
+                fontFamily: '"Inter", system-ui, sans-serif',
+              }}
+            >
+              {user?.name?.charAt(0) ?? 'R'}
+            </div>
+            <button
+              onClick={handleLogout}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '10px 14px',
+                borderRadius: 999,
+                border: `1px solid ${shellStyles.border}`,
+                background: 'rgba(255,255,255,0.92)',
+                color: shellStyles.text,
+                cursor: 'pointer',
+                fontSize: 12,
+                fontWeight: 600,
+                fontFamily: '"Inter", system-ui, sans-serif',
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+              Logout
+            </button>
           </div>
         </header>
 
-        <div className="flex-1 p-8">
+        <div style={{ flex: 1, padding: '34px 34px 40px' }}>
           {children}
         </div>
       </main>

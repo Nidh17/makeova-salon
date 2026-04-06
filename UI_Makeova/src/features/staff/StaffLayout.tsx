@@ -48,11 +48,21 @@ interface StaffLayoutProps {
   children: React.ReactNode
 }
 
+const shellStyles = {
+  background: 'linear-gradient(180deg, #eef5ef 0%, #e6efe7 56%, #dde8df 100%)',
+  accent: '#5b8e72',
+  accentSoft: '#d8e8dc',
+  border: '#d1dfd4',
+  text: '#1d2b22',
+  muted: '#63776a',
+  sidebar: 'linear-gradient(180deg, #233329 0%, #17211b 100%)',
+}
+
 const StaffLayout: React.FC<StaffLayoutProps> = ({ children }) => {
-  const navigate  = useNavigate()
-  const location  = useLocation()
-  const dispatch  = useAppDispatch()
-  const user      = useAppSelector(selectUser)
+  const navigate = useNavigate()
+  const location = useLocation()
+  const dispatch = useAppDispatch()
+  const user = useAppSelector(selectUser)
   const [collapsed, setCollapsed] = useState(false)
 
   const handleLogout = async () => {
@@ -63,28 +73,88 @@ const StaffLayout: React.FC<StaffLayoutProps> = ({ children }) => {
 
   return (
     <div
-      className="flex min-h-screen font-serif"
-      style={{ background: '#F0FAF4' }}
+      style={{
+        display: 'flex',
+        minHeight: '100vh',
+        background: shellStyles.background,
+        color: shellStyles.text,
+        fontFamily: '"Georgia", "Times New Roman", serif',
+        position: 'relative',
+        overflow: 'hidden',
+      }}
     >
-      {/* ── Sidebar ── */}
+      <div
+        style={{
+          position: 'fixed',
+          inset: 0,
+          pointerEvents: 'none',
+          background: 'radial-gradient(circle at top left, rgba(255,255,255,0.32) 0%, rgba(255,255,255,0) 38%), radial-gradient(circle at bottom right, rgba(83,115,92,0.05) 0%, rgba(83,115,92,0) 30%)',
+        }}
+      />
+
       <aside
-        className={`fixed top-0 left-0 bottom-0 z-[100] flex flex-col bg-white border-r border-[#C8E6C9] shadow-[2px_0_12px_rgba(122,196,154,0.08)] transition-all duration-[250ms] ease-in-out flex-shrink-0 ${collapsed ? 'w-16' : 'w-[220px]'}`}
+        style={{
+          width: collapsed ? 84 : 264,
+          background: shellStyles.sidebar,
+          borderRight: '1px solid rgba(214,230,219,0.12)',
+          display: 'flex',
+          flexDirection: 'column',
+          transition: 'width 0.25s ease',
+          flexShrink: 0,
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          bottom: 0,
+          zIndex: 100,
+          boxShadow: '0 24px 60px rgba(17,28,20,0.28)',
+          overflow: 'hidden',
+        }}
       >
-        {/* Logo */}
-        <div className={`h-16 flex items-center border-b border-[#C8E6C9] ${collapsed ? 'justify-center px-0' : 'justify-between px-5'}`}>
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'linear-gradient(180deg, rgba(255,255,255,0.05), transparent 30%)',
+            pointerEvents: 'none',
+          }}
+        />
+
+        <div
+          style={{
+            minHeight: 96,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: collapsed ? 'center' : 'space-between',
+            padding: collapsed ? '0 10px' : '0 22px',
+            borderBottom: '1px solid rgba(214,230,219,0.1)',
+            position: 'relative',
+            zIndex: 1,
+          }}
+        >
           {!collapsed && (
-            <div>
-              <span className="block text-[13px] font-bold tracking-[0.2em] uppercase text-[#7AC49A]">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.28em', textTransform: 'uppercase', color: '#cfe2d4', fontFamily: '"Inter", system-ui, sans-serif' }}>
                 Makeova
               </span>
-              <span className="text-[9px] text-[#bbb] tracking-[0.1em] uppercase">
-                Provider Portal
+              <span style={{ fontSize: 20, lineHeight: 1, color: '#f4faf5', fontWeight: 700 }}>
+                Provider Studio
               </span>
             </div>
           )}
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className="bg-transparent border-none cursor-pointer text-[#7AC49A] p-1"
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 999,
+              background: 'rgba(245,252,246,0.08)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              cursor: 'pointer',
+              color: '#cfe2d4',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
               <line x1="3" y1="12" x2="21" y2="12"/>
@@ -94,23 +164,7 @@ const StaffLayout: React.FC<StaffLayoutProps> = ({ children }) => {
           </button>
         </div>
 
-        {/* Staff avatar */}
-        {!collapsed && (
-          <div className="px-5 py-4 border-b border-[#C8E6C9]">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-[#C8E6C9] flex items-center justify-center text-[14px] font-bold text-[#7AC49A] flex-shrink-0">
-                {user?.name?.charAt(0) ?? 'S'}
-              </div>
-              <div className="overflow-hidden">
-                <p className="text-[13px] font-bold text-[#2d2d2d] m-0 truncate">{user?.name ?? 'Provider'}</p>
-                <p className="text-[10px] text-[#aaa] m-0 truncate">{user?.email ?? ''}</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Nav */}
-        <nav className="flex-1 py-4">
+        <nav style={{ flex: 1, padding: '12px 0 18px', position: 'relative', zIndex: 1 }}>
           {navItems.map(({ label, path, icon }) => {
             const active = location.pathname === path
             return (
@@ -118,26 +172,80 @@ const StaffLayout: React.FC<StaffLayoutProps> = ({ children }) => {
                 key={path}
                 onClick={() => navigate(path)}
                 title={collapsed ? label : ''}
-                className={`w-full flex items-center gap-3 text-[13px] tracking-[0.02em] font-serif transition-all duration-[180ms] whitespace-nowrap overflow-hidden border-none cursor-pointer
-                  ${collapsed ? 'justify-center px-0 py-3' : 'justify-start px-5 py-3'}
-                  ${active
-                    ? 'bg-[#E8F5E9] text-[#7AC49A] border-l-[3px] border-[#7AC49A]'
-                    : 'bg-transparent text-[#888] border-l-[3px] border-transparent hover:bg-[#F0FAF4] hover:text-[#7AC49A]'
-                  }`}
+                style={{
+                  width: 'calc(100% - 20px)',
+                  margin: '0 10px 8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  padding: collapsed ? '14px 0' : '14px 18px',
+                  justifyContent: collapsed ? 'center' : 'flex-start',
+                  background: active ? 'linear-gradient(135deg, rgba(207,226,212,0.22), rgba(255,255,255,0.06))' : 'transparent',
+                  border: active ? '1px solid rgba(207,226,212,0.14)' : '1px solid transparent',
+                  borderRadius: 16,
+                  cursor: 'pointer',
+                  color: active ? '#f4faf5' : '#bed0c4',
+                  fontSize: 13,
+                  letterSpacing: '0.02em',
+                  fontFamily: '"Inter", system-ui, sans-serif',
+                  fontWeight: active ? 600 : 500,
+                  transition: 'all 0.18s',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  boxShadow: active ? '0 10px 24px rgba(0,0,0,0.16)' : 'none',
+                }}
+                onMouseEnter={e => {
+                  if (!active) {
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.05)'
+                    e.currentTarget.style.color = '#eef8f0'
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (!active) {
+                    e.currentTarget.style.background = 'transparent'
+                    e.currentTarget.style.color = '#bed0c4'
+                  }
+                }}
               >
-                {icon}
+                <span style={{ color: active ? '#d8ecde' : '#9eb9a8' }}>{icon}</span>
                 {!collapsed && <span>{label}</span>}
               </button>
             )
           })}
         </nav>
 
-        {/* Logout */}
-        <div className="py-4 border-t border-[#C8E6C9]">
+        <div style={{ padding: '18px 16px 20px', borderTop: '1px solid rgba(214,230,219,0.1)', position: 'relative', zIndex: 1 }}>
+          {!collapsed && (
+            <div
+              style={{
+                padding: '14px 16px',
+                borderRadius: 20,
+                background: 'rgba(245,252,246,0.08)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                marginBottom: 12,
+              }}
+            >
+              <p style={{ margin: 0, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#95ad9d', fontFamily: '"Inter", system-ui, sans-serif' }}>Provider</p>
+              <p style={{ margin: '7px 0 0', fontSize: 15, color: '#f4faf5', fontWeight: 700 }}>{user?.name ?? 'Provider'}</p>
+            </div>
+          )}
           <button
             onClick={handleLogout}
-            className={`w-full flex items-center gap-3 bg-transparent border-none cursor-pointer text-[#bbb] text-[13px] font-serif transition-colors duration-[180ms] hover:text-[#7AC49A]
-              ${collapsed ? 'justify-center px-0 py-3' : 'justify-start px-5 py-3'}`}
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              padding: collapsed ? '12px 0' : '12px 16px',
+              justifyContent: collapsed ? 'center' : 'flex-start',
+              background: 'rgba(245,252,246,0.08)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: 16,
+              cursor: 'pointer',
+              color: '#cfe2d4',
+              fontSize: 13,
+              fontFamily: '"Inter", system-ui, sans-serif',
+            }}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
@@ -149,27 +257,99 @@ const StaffLayout: React.FC<StaffLayoutProps> = ({ children }) => {
         </div>
       </aside>
 
-      {/* ── Main ── */}
-      <main className={`flex flex-1 flex-col min-h-screen transition-all duration-[250ms] ease-in-out ${collapsed ? 'ml-16' : 'ml-[220px]'}`}>
-        {/* Top bar */}
-        <header className="h-16 bg-white border-b border-[#C8E6C9] flex items-center justify-between px-8 sticky top-0 z-50">
-          <span className="text-[12px] text-[#7AC49A] bg-[#E8F5E9] px-[14px] py-1 rounded-full tracking-[0.06em]">
-            Provider Portal
-          </span>
-          <div className="flex items-center gap-2.5">
-            {/* Availability indicator */}
-            <span className="flex items-center gap-1.5 text-[11px] text-[#7AC49A] bg-[#E8F5E9] px-3 py-1 rounded-full">
-              <span className="w-2 h-2 rounded-full bg-[#7AC49A] inline-block animate-pulse" />
+      <main
+        style={{
+          flex: 1,
+          marginLeft: collapsed ? 84 : 264,
+          transition: 'margin-left 0.25s ease',
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          position: 'relative',
+          zIndex: 1,
+        }}
+      >
+        <header
+          style={{
+            height: 82,
+            background: 'rgba(241,247,242,0.9)',
+            backdropFilter: 'blur(20px)',
+            borderBottom: `1px solid ${shellStyles.border}`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '0 34px',
+            gap: 16,
+            position: 'sticky',
+            top: 0,
+            zIndex: 50,
+          }}
+        >
+          <div>
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                fontSize: 11,
+                color: shellStyles.accent,
+                background: shellStyles.accentSoft,
+                padding: '8px 14px',
+                borderRadius: 999,
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+                fontWeight: 700,
+                fontFamily: '"Inter", system-ui, sans-serif',
+              }}
+            >
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: shellStyles.accent }} />
+              Provider Portal
+            </span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 7,
+                fontSize: 11,
+                color: '#476f59',
+                background: '#dfeee2',
+                padding: '8px 12px',
+                borderRadius: 999,
+                fontFamily: '"Inter", system-ui, sans-serif',
+                fontWeight: 600,
+              }}
+            >
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#5b8e72', boxShadow: '0 0 0 4px rgba(91,142,114,0.12)' }} />
               Available
             </span>
-            <div className="w-[34px] h-[34px] rounded-full bg-[#C8E6C9] flex items-center justify-center text-[13px] text-[#7AC49A] font-bold font-serif">
+            <div
+              style={{
+                width: 42,
+                height: 42,
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #95b6a0, #5b8e72)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 14,
+                color: '#f9fffa',
+                fontWeight: 700,
+                boxShadow: '0 8px 18px rgba(91,142,114,0.18)',
+                fontFamily: '"Inter", system-ui, sans-serif',
+              }}
+            >
               {user?.name?.charAt(0) ?? 'S'}
             </div>
-            <span className="text-[13px] text-[#888] font-serif">{user?.name ?? 'Provider'}</span>
+            <div style={{ textAlign: 'right' }}>
+              <p style={{ margin: 0, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: shellStyles.muted, fontFamily: '"Inter", system-ui, sans-serif' }}>Provider</p>
+              <p style={{ margin: '4px 0 0', fontSize: 14, color: shellStyles.text, fontWeight: 700 }}>{user?.name ?? 'Provider'}</p>
+            </div>
           </div>
         </header>
 
-        <div className="flex-1 p-8">
+        <div style={{ flex: 1, padding: '34px 34px 40px' }}>
           {children}
         </div>
       </main>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import authService        from '../../api/authService'
+import authService from '../../api/authService'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../../store'
 import { logout, selectUser } from '../../store/slices/authSlice'
@@ -94,7 +94,7 @@ const navItems = [
     path: '/admin/roles',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
       </svg>
     ),
   },
@@ -110,64 +110,115 @@ const navItems = [
   },
 ]
 
+const shellStyles = {
+  background: 'linear-gradient(180deg, #f5efe8 0%, #efe4d8 55%, #e8dacb 100%)',
+  accent: '#9b6744',
+  accentSoft: '#e8d2c0',
+  border: '#e1cdbd',
+  text: '#2b1e17',
+  muted: '#705c51',
+}
+
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
-  const navigate  = useNavigate()
-  const location  = useLocation()
-  const dispatch  = useAppDispatch()
-  const user      = useAppSelector(selectUser)
+  const navigate = useNavigate()
+  const location = useLocation()
+  const dispatch = useAppDispatch()
+  const user = useAppSelector(selectUser)
   const [collapsed, setCollapsed] = useState(false)
 
   const handleLogout = async () => {
     try {
-      await authService.logout()    // DELETE session from DB + clear localStorage
+      await authService.logout()
     } finally {
-      dispatch(logout())            // clear Redux state
+      dispatch(logout())
       navigate('/login', { replace: true })
     }
   }
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#F6F3EE', fontFamily: '"Inter", system-ui, sans-serif' }}>
-
-      {/* ── Sidebar ── */}
-      <aside style={{
-        width: collapsed ? 64 : 220,
-        background: '#F8F4EE',
-        borderRight: '1px solid #E4D8CB',
+    <div
+      style={{
         display: 'flex',
-        flexDirection: 'column',
-        transition: 'width 0.25s ease',
-        flexShrink: 0,
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        bottom: 0,
-        zIndex: 100,
-        boxShadow: '0 18px 45px rgba(61,38,21,0.06)',
-      }}>
+        minHeight: '100vh',
+        background: shellStyles.background,
+        color: shellStyles.text,
+        fontFamily: '"Georgia", "Times New Roman", serif',
+        position: 'relative',
+        overflow: 'hidden',
+      }}
+    >
+      <div
+        style={{
+          position: 'fixed',
+          inset: 0,
+          pointerEvents: 'none',
+          background: 'radial-gradient(circle at top left, rgba(255,255,255,0.32) 0%, rgba(255,255,255,0) 36%), radial-gradient(circle at bottom right, rgba(120,85,62,0.05) 0%, rgba(120,85,62,0) 30%)',
+        }}
+      />
 
-        {/* Logo */}
-        <div style={{
-          height: 64,
+      <aside
+        style={{
+          width: collapsed ? 84 : 280,
+          background: 'linear-gradient(180deg, #3a271d 0%, #241813 100%)',
+          borderRight: '1px solid rgba(232,216,203,0.16)',
           display: 'flex',
-          alignItems: 'center',
-          justifyContent: collapsed ? 'center' : 'space-between',
-          padding: collapsed ? '0' : '0 20px',
-          borderBottom: '1px solid #E4D8CB',
-        }}>
+          flexDirection: 'column',
+          transition: 'width 0.25s ease',
+          flexShrink: 0,
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          bottom: 0,
+          zIndex: 100,
+          boxShadow: '0 24px 60px rgba(31,16,10,0.32)',
+          overflow: 'hidden',
+        }}
+      >
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'linear-gradient(180deg, rgba(255,255,255,0.05), transparent 28%)',
+            pointerEvents: 'none',
+          }}
+        />
+
+        <div
+          style={{
+            minHeight: 96,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: collapsed ? 'center' : 'space-between',
+            padding: collapsed ? '0 10px' : '0 24px',
+            borderBottom: '1px solid rgba(232,216,203,0.14)',
+            position: 'relative',
+            zIndex: 1,
+          }}
+        >
           {!collapsed && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9C6942' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.3em', textTransform: 'uppercase', color: '#f2ddcb', fontFamily: '"Inter", system-ui, sans-serif' }}>
                 Makeova
               </span>
-              <span style={{ fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#9C8878' }}>
+              <span style={{ fontSize: 20, lineHeight: 1, color: '#fff7f0', fontWeight: 700 }}>
                 Admin Portal
               </span>
             </div>
           )}
           <button
             onClick={() => setCollapsed(!collapsed)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9C6942', padding: 4 }}
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 999,
+              background: 'rgba(255,248,240,0.08)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              cursor: 'pointer',
+              color: '#f2ddcb',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
               <line x1="3" y1="12" x2="21" y2="12" />
@@ -177,8 +228,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
           </button>
         </div>
 
-        {/* Nav items */}
-        <nav style={{ flex: 1, padding: '16px 0' }}>
+        <nav style={{ flex: 1, padding: '12px 0 18px', position: 'relative', zIndex: 1 }}>
           {navItems.map(({ label, path, icon }) => {
             const active = location.pathname === path
             return (
@@ -187,17 +237,18 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                 onClick={() => navigate(path)}
                 title={collapsed ? label : ''}
                 style={{
-                  width: '100%',
+                  width: 'calc(100% - 20px)',
+                  margin: '0 10px 8px',
                   display: 'flex',
                   alignItems: 'center',
                   gap: 12,
-                  padding: collapsed ? '12px 0' : '12px 20px',
+                  padding: collapsed ? '14px 0' : '14px 18px',
                   justifyContent: collapsed ? 'center' : 'flex-start',
-                  background: active ? '#EFE2D5' : 'transparent',
-                  border: 'none',
-                  borderLeft: active ? '3px solid #B67F56' : '3px solid transparent',
+                  background: active ? 'linear-gradient(135deg, rgba(242,221,203,0.22), rgba(255,255,255,0.08))' : 'transparent',
+                  border: active ? '1px solid rgba(242,221,203,0.12)' : '1px solid transparent',
+                  borderRadius: 16,
                   cursor: 'pointer',
-                  color: active ? '#9C6942' : '#756457',
+                  color: active ? '#fff7f0' : '#d6c0b0',
                   fontSize: 13,
                   letterSpacing: '0.02em',
                   fontFamily: '"Inter", system-ui, sans-serif',
@@ -205,29 +256,43 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                   transition: 'all 0.18s',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
+                  boxShadow: active ? '0 10px 24px rgba(0,0,0,0.18)' : 'none',
                 }}
                 onMouseEnter={e => {
                   if (!active) {
-                    e.currentTarget.style.background = '#F2E9DE'
-                    e.currentTarget.style.color = '#9C6942'
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.05)'
+                    e.currentTarget.style.color = '#fff0e4'
                   }
                 }}
                 onMouseLeave={e => {
                   if (!active) {
                     e.currentTarget.style.background = 'transparent'
-                    e.currentTarget.style.color = '#756457'
+                    e.currentTarget.style.color = '#d6c0b0'
                   }
                 }}
               >
-                {icon}
+                <span style={{ color: active ? '#f6d8c4' : '#cda991' }}>{icon}</span>
                 {!collapsed && <span>{label}</span>}
               </button>
             )
           })}
         </nav>
 
-        {/* Logout */}
-        <div style={{ padding: '16px 0', borderTop: '1px solid #E4D8CB' }}>
+        <div style={{ padding: '18px 16px 20px', borderTop: '1px solid rgba(232,216,203,0.14)', position: 'relative', zIndex: 1 }}>
+          {!collapsed && (
+            <div
+              style={{
+                padding: '14px 16px',
+                borderRadius: 20,
+                background: 'rgba(255,248,240,0.08)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                marginBottom: 12,
+              }}
+            >
+              <p style={{ margin: 0, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#b89884', fontFamily: '"Inter", system-ui, sans-serif' }}>Account</p>
+              <p style={{ margin: '7px 0 0', fontSize: 15, color: '#fff7f0', fontWeight: 700 }}>{user?.name ?? 'Admin'}</p>
+            </div>
+          )}
           <button
             onClick={handleLogout}
             style={{
@@ -235,18 +300,16 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               display: 'flex',
               alignItems: 'center',
               gap: 12,
-              padding: collapsed ? '12px 0' : '12px 20px',
+              padding: collapsed ? '12px 0' : '12px 16px',
               justifyContent: collapsed ? 'center' : 'flex-start',
-              background: 'transparent',
-              border: 'none',
+              background: 'rgba(255,248,240,0.08)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: 16,
               cursor: 'pointer',
-              color: '#9C8878',
+              color: '#f2ddcb',
               fontSize: 13,
               fontFamily: '"Inter", system-ui, sans-serif',
-              transition: 'color 0.18s',
             }}
-            onMouseEnter={e => (e.currentTarget.style.color = '#9C6942')}
-            onMouseLeave={e => (e.currentTarget.style.color = '#9C8878')}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
@@ -258,65 +321,106 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         </div>
       </aside>
 
-      {/* ── Main content ── */}
-      <main style={{
-        flex: 1,
-        marginLeft: collapsed ? 64 : 220,
-        transition: 'margin-left 0.25s ease',
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-      }}>
-        {/* Top bar */}
-        <header style={{
-          height: 64,
-          background: 'rgba(255,253,249,0.88)',
-          backdropFilter: 'blur(12px)',
-          borderBottom: '1px solid #E4D8CB',
+      <main
+        style={{
+          flex: 1,
+          marginLeft: collapsed ? 84 : 280,
+          transition: 'margin-left 0.25s ease',
+          minHeight: '100vh',
           display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '0 32px',
-          gap: 16,
-          position: 'sticky',
-          top: 0,
-          zIndex: 50,
-        }}>
-          <span style={{
-            fontSize: 12,
-            color: '#9C6942',
-            background: '#EFE2D5',
-            padding: '7px 14px',
-            borderRadius: 999,
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
-            fontWeight: 600,
-          }}>
-            Admin Portal
-          </span>
-          {/* Admin avatar */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{
-              width: 34,
-              height: 34,
-              borderRadius: '50%',
-              background: '#E6D7C8',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 13,
-              color: '#9C6942',
-              fontWeight: 700,
-              fontFamily: '"Inter", system-ui, sans-serif',
-            }}>{user?.name?.charAt(0) ?? 'A'}</div>
-            <span style={{ fontSize: 13, color: '#756457', fontFamily: '"Inter", system-ui, sans-serif' }}>{user?.name ?? 'Admin'}</span>
+          flexDirection: 'column',
+          position: 'relative',
+          zIndex: 1,
+        }}
+      >
+        <header
+          style={{
+            height: 82,
+            background: 'rgba(247,240,233,0.9)',
+            backdropFilter: 'blur(20px)',
+            borderBottom: `1px solid ${shellStyles.border}`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '0 34px',
+            gap: 16,
+            position: 'sticky',
+            top: 0,
+            zIndex: 50,
+          }}
+        >
+          <div>
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                fontSize: 11,
+                color: shellStyles.accent,
+                background: shellStyles.accentSoft,
+                padding: '8px 14px',
+                borderRadius: 999,
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+                fontWeight: 700,
+                fontFamily: '"Inter", system-ui, sans-serif',
+              }}
+            >
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: shellStyles.accent }} />
+              Admin Portal
+            </span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{ textAlign: 'right' }}>
+              <p style={{ margin: 0, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: shellStyles.muted, fontFamily: '"Inter", system-ui, sans-serif' }}>Signed In</p>
+              <p style={{ margin: '4px 0 0', fontSize: 14, color: shellStyles.text, fontWeight: 700 }}>{user?.name ?? 'Admin'}</p>
+            </div>
+            <div
+              style={{
+                width: 42,
+                height: 42,
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #d3b195, #a56c45)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 14,
+                color: '#fff8f3',
+                fontWeight: 700,
+                boxShadow: '0 8px 18px rgba(165,108,69,0.22)',
+                fontFamily: '"Inter", system-ui, sans-serif',
+              }}
+            >
+              {user?.name?.charAt(0) ?? 'A'}
+            </div>
+            <button
+              onClick={handleLogout}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '10px 14px',
+                borderRadius: 999,
+                border: `1px solid ${shellStyles.border}`,
+                background: 'rgba(244,235,227,0.92)',
+                color: shellStyles.text,
+                cursor: 'pointer',
+                fontSize: 12,
+                fontWeight: 600,
+                fontFamily: '"Inter", system-ui, sans-serif',
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+              Logout
+            </button>
           </div>
         </header>
 
-        {/* Page content */}
-        <div style={{ flex: 1, padding: '32px' }}>
-          {children}
-        </div>
+        <div style={{ flex: 1, padding: '34px 34px 40px' }}>{children}</div>
       </main>
     </div>
   )
