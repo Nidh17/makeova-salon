@@ -322,6 +322,15 @@ const AppointmentCalendar: React.FC = () => {
                         Confirm
                       </button>
                     )}
+                    {actions.canComplete && (
+                      <button
+                        onClick={() => handleStatusChange(apt._id, 'completed')}
+                        title="Complete"
+                        className="rounded-lg bg-[#E3F2FD] px-2.5 py-1.5 text-[11px] font-semibold text-[#1565C0] border border-[#1565C0]/30 cursor-pointer hover:bg-[#1565C0] hover:text-white transition-all font-serif"
+                      >
+                        Complete
+                      </button>
+                    )}
                     {actions.canCancel && (
                       <button
                         onClick={() => handleStatusChange(apt._id, 'cancelled')}
@@ -331,10 +340,16 @@ const AppointmentCalendar: React.FC = () => {
                         Cancel
                       </button>
                     )}
-                    {!actions.canConfirm && !actions.canCancel && actions.isReadOnly && (
-                      <span className="text-[11px] font-semibold text-[#9AA7B8] font-serif">Read only</span>
+                    {!actions.canConfirm && !actions.canCancel && !actions.canComplete && actions.isReadOnly && (
+                      <span className={`rounded-lg px-2.5 py-1.5 text-[11px] font-semibold border font-serif ${
+                        actions.finalLabel === 'Cancelled'
+                          ? 'bg-[#FFEBEE] text-[#E53935] border-[#E53935]/20'
+                          : 'bg-[#EEF7FF] text-[#1565C0] border-[#1565C0]/20'
+                      }`}>
+                        {actions.finalLabel || 'Done'}
+                      </span>
                     )}
-                    {!actions.canConfirm && !actions.canCancel && !actions.isReadOnly && (
+                    {!actions.canConfirm && !actions.canCancel && !actions.canComplete && !actions.isReadOnly && (
                       <span className="text-[11px] font-semibold text-[#B8AAA2] font-serif">No actions</span>
                     )}
                   </div>

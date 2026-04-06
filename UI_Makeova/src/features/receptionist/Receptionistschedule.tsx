@@ -76,6 +76,15 @@ const ReceptionistSchedule: React.FC = () => {
     }
   }
 
+  const completeAppt = async (id: string) => {
+    try {
+      await updateAppointmentStatus(id, 'completed')
+      setAppointments(prev => prev.map(a => a._id === id ? { ...a, status: 'completed' } : a))
+    } catch (error) {
+      console.error('Failed to complete appointment:', error)
+    }
+  }
+
   const blockAppts = appointments.filter(a => getBlockIndex(a.startTime) === activeBlock)
 
   return (
@@ -143,6 +152,7 @@ const ReceptionistSchedule: React.FC = () => {
         loading={loading}
         onCancel={cancelAppt}
         onConfirm={confirmAppt}
+        onComplete={completeAppt}
         showActions={true}
         actorRole="receptionist"
       />

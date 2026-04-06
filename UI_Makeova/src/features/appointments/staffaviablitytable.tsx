@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 
 import type { IUser } from '../../types'
 import { formatTime, getAllAppointments, getAllLeaves, type IAppointment, type ILeave } from '@/api/AppointmentsApi'
-import { getAllUsers } from '@/api/Userapi'
+import { filterUsersByRole, getAllUsers } from '@/api/Userapi'
 import Pagination from '@/components/shared/Pagination'
 import { TableSkeleton } from '@/components/shared/Skeleton'
 import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from '@/utils/pagination'
@@ -37,19 +37,15 @@ const StaffAvailabilityTable: React.FC<StaffAvailabilityTableProps> = ({ onBookF
       setLoading(true)
 
       try {
-        const [users, leaveData, appointmentData] = await Promise.all([
-          getAllUsers({ page: 1, limit: 500 }),
+        const [staffUsers, leaveData, appointmentData] = await Promise.all([
+          getAllUsers({ page: 1, limit: 500, role: 'staff' }),
           getAllLeaves({ page: 1, limit: 500 }),
           getAllAppointments({ page: 1, limit: 1000 }),
         ])
 
         if (cancelled) return
 
-        setStaffList(
-          users.items.filter(user =>
-            user.role.some(role => typeof role !== 'string' && role.name?.toLowerCase() === 'staff')
-          )
-        )
+        setStaffList(filterUsersByRole(staffUsers.items, 'staff'))
         setLeaves(leaveData.items)
         setAppointments(appointmentData.items)
       } catch {

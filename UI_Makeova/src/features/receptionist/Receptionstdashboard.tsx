@@ -242,6 +242,15 @@ const ReceptionistDashboard: React.FC = () => {
     }
   }
 
+  const completeAppt = async (id: string) => {
+    try {
+      await updateAppointmentStatus(id, 'completed')
+      setAppointments(prev => prev.map(a => a._id === id ? { ...a, status: 'completed' } : a))
+    } catch (error) {
+      console.error('Failed to complete appointment:', error)
+    }
+  }
+
   const handleCancelLeave = async (leaveId: string) => {
     const leave = myLeaves.find(item => item._id === leaveId)
     if (!leave || leave.status !== 'pending') return
@@ -439,6 +448,7 @@ const ReceptionistDashboard: React.FC = () => {
           loading={loading}
           onCancel={cancelAppt}
           onConfirm={confirmAppt}
+          onComplete={completeAppt}
           showActions={true}
           actorRole="receptionist"
           pageSize={10}

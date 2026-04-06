@@ -59,6 +59,15 @@ const ReceptionistBooking: React.FC = () => {
     }
   }
 
+  const completeAppt = async (id: string) => {
+    try {
+      await updateAppointmentStatus(id, 'completed')
+      setBookings(prev => prev.map(a => (a._id === id ? { ...a, status: 'completed' } : a)))
+    } catch (error) {
+      console.error('Failed to complete appointment:', error)
+    }
+  }
+
   return (
     <ReceptionistLayout>
       <div className="flex items-center justify-between mb-6">
@@ -111,6 +120,7 @@ const ReceptionistBooking: React.FC = () => {
         loading={loading}
         onCancel={cancelAppt}
         onConfirm={confirmAppt}
+        onComplete={completeAppt}
         showActions={true}
         actorRole="receptionist"
         pageSize={pageSize}

@@ -25,28 +25,42 @@ export const statusConfig = {
 export const getAppointmentActions = (
   status: IAppointment['status'],
   role: AppointmentActorRole
-): { canConfirm: boolean; canCancel: boolean; isReadOnly: boolean } => {
+): {
+  canConfirm: boolean
+  canCancel: boolean
+  canComplete: boolean
+  isReadOnly: boolean
+  finalLabel?: string
+} => {
   if (status === 'completed') {
-    return { canConfirm: false, canCancel: false, isReadOnly: true }
+    return { canConfirm: false, canCancel: false, canComplete: false, isReadOnly: true, finalLabel: 'Done' }
+  }
+
+  if (status === 'cancelled') {
+    return { canConfirm: false, canCancel: false, canComplete: false, isReadOnly: true, finalLabel: 'Cancelled' }
   }
 
   if (role === 'admin') {
     if (status === 'pending') {
-      return { canConfirm: true, canCancel: true, isReadOnly: false }
+      return { canConfirm: true, canCancel: true, canComplete: false, isReadOnly: false }
     }
 
     if (status === 'confirmed') {
-      return { canConfirm: false, canCancel: true, isReadOnly: false }
+      return { canConfirm: false, canCancel: true, canComplete: true, isReadOnly: false }
     }
   }
 
   if (role === 'receptionist') {
     if (status === 'pending') {
-      return { canConfirm: true, canCancel: true, isReadOnly: false }
+      return { canConfirm: true, canCancel: true, canComplete: false, isReadOnly: false }
+    }
+
+    if (status === 'confirmed') {
+      return { canConfirm: false, canCancel: true, canComplete: true, isReadOnly: false }
     }
   }
 
-  return { canConfirm: false, canCancel: false, isReadOnly: false }
+  return { canConfirm: false, canCancel: false, canComplete: false, isReadOnly: false }
 }
 
 export const getCustomerName = (userID: IAppointment['userID']): string =>
