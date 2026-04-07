@@ -94,7 +94,7 @@ const ReceptionistSchedule: React.FC = () => {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-[22px] font-bold text-[#2d2d2d] m-0 font-serif">Today's Schedule</h1>
-          <p className="text-[13px] text-[#aaa] mt-1 mb-0">{appointments.length} total Â· {appointments.filter(a => a.status === 'confirmed').length} confirmed</p>
+          <p className="text-[13px] text-[#aaa] mt-1 mb-0">{appointments.length} total · {appointments.filter(a => a.status === 'confirmed').length} confirmed</p>
         </div>
         <button
           onClick={() => setShowModal(true)}
@@ -184,3 +184,4 @@ const ReceptionistSchedule: React.FC = () => {
 }
 
 export default ReceptionistSchedule
+

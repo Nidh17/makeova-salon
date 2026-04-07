@@ -4,6 +4,8 @@ import type { IUser } from '@/types'
 export type AppointmentActorRole = 'admin' | 'receptionist'
 
 export const WORKING_DAY_OPTIONS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const
+export const BUSINESS_HOUR_START = '09:00'
+export const BUSINESS_HOUR_END = '20:00'
 
 export const WORKING_DAY_LABELS: Record<(typeof WORKING_DAY_OPTIONS)[number], string> = {
   sun: 'Sunday',
@@ -219,6 +221,23 @@ export const isPastSlot = (date: string, slotTime: string): boolean => {
   if (Number.isNaN(slotStart.getTime())) return false
 
   return slotStart.getTime() < Date.now()
+}
+
+export const exceedsBusinessHours = (
+  date: string,
+  slotTime: string,
+  serviceDuration: number
+): boolean => {
+  if (!date || !slotTime || serviceDuration <= 0) return false
+
+  const slotStart = new Date(`${date}T${slotTime}:00`)
+  const businessEnd = new Date(`${date}T${BUSINESS_HOUR_END}:00`)
+
+  if (Number.isNaN(slotStart.getTime()) || Number.isNaN(businessEnd.getTime())) {
+    return false
+  }
+
+  return slotStart.getTime() >= businessEnd.getTime()
 }
 
 export const getBookedCount = (

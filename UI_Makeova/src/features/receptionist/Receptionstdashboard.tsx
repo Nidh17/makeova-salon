@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import ReceptionistLayout from './Receptionistlayout'
 import AppointmentForm from '../appointments/AppointmentForm'
 import AppointmentTable from '../appointments/AppointmentTable'
-import { createUser, getAllUsers } from '@/api/Userapi'
+import ProviderScheduleCalendar from '../appointments/ProviderScheduleCalendar'
+import { createUser, filterUsersByRole, getAllUsers } from '@/api/Userapi'
 import UserForm from '../admin/users/Userform'
 import {
   createLeave,
@@ -18,8 +19,10 @@ import {
   type LeaveType,
 } from '@/api/AppointmentsApi'
 import { getAppointmentStats } from '../appointments/appointmentUtils'
+import { Hand } from 'lucide-react'
 import { useAppSelector } from '@/store'
 import { selectUser } from '@/store/slices/authSlice'
+import { IUser } from '@/types'
 
 const LEAVE_STATUS_STYLE: Record<LeaveStatus, { bg: string; text: string; label: string }> = {
   pending: { bg: 'bg-[#FFF8E1]', text: 'text-[#FFA000]', label: 'Pending' },
@@ -160,6 +163,8 @@ const ReceptionistDashboard: React.FC = () => {
   const [leaveLoading, setLeaveLoading] = useState(true)
   const [leaveActionLoading, setLeaveActionLoading] = useState<string | null>(null)
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null)
+  const [providerUsers, setProviderUsers] = useState<IUser[]>([])
+  const [calendarAppointments, setCalendarAppointments] = useState<IAppointment[]>([])
 
   const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
     setToast({ msg, type })
@@ -171,10 +176,10 @@ const ReceptionistDashboard: React.FC = () => {
       setLoading(true)
       setLeaveLoading(true)
       const [allAppointments, allLeaves, allUsers, receptionistLeaves] = await Promise.all([
-        getAllAppointments({ page: 1, limit: 10 }),
-        getAllLeaves({ page: 1, limit: 10 }),
-        getAllUsers({ page: 1, limit: 10 }),
-        currentUser?._id ? getLeavesByStaff(currentUser._id, { page: 1, limit: 10 }) : Promise.resolve({ items: [], pagination: { currentPage: 1, perPage: 10, totalItems: 0, totalPages: 1, hasNextPage: false, hasPreviousPage: false } }),
+        getAllAppointments({ page: 1, limit: 200 }),
+        getAllLeaves({ page: 1, limit: 100 }),
+        getAllUsers({ page: 1, limit: 500 }),
+        currentUser?._id ? getLeavesByStaff(currentUser._id, { page: 1, limit: 100 }) : Promise.resolve({ items: [], pagination: { currentPage: 1, perPage: 10, totalItems: 0, totalPages: 1, hasNextPage: false, hasPreviousPage: false } }),
       ])
 
       const appointmentItems = allAppointments.items
@@ -187,14 +192,13 @@ const ReceptionistDashboard: React.FC = () => {
         new Date(apt.appointmentDate).toDateString() === today
       )
 
-      const staffIds = new Set(
-        userItems
-          .filter(user => user.role.some(role => typeof role !== 'string' && role.name?.toLowerCase() === 'staff'))
-          .map(user => user._id)
-      )
+      const providerList = filterUsersByRole(userItems, 'staff')
+      const staffIds = new Set(providerList.map(user => user._id))
 
       setAppointments(todayAppts)
       setTodayCount(todayAppts.length)
+      setProviderUsers(providerList)
+      setCalendarAppointments(appointmentItems)
       setTeamLeaves(
         leaveItems
           .filter(leave => {
@@ -282,9 +286,13 @@ const ReceptionistDashboard: React.FC = () => {
         </div>
       )}
 
+      <div className="rounded-[34px] border border-[#e2d8d4] bg-[linear-gradient(180deg,#fbfbf9_0%,#f4f1ed_55%,#eeebe6_100%)] p-6 shadow-[0_16px_40px_rgba(31,41,51,0.08)]">
       {/* Greeting */}
       <div className="mb-6">
-        <h1 className="text-[22px] font-bold text-[#2d2d2d] m-0 font-serif">Good Morning 👋</h1>
+        <h1 className="flex items-center gap-2 text-[22px] font-bold text-[#2d2d2d] m-0 font-serif">
+          Good Morning
+          <Hand size={20} strokeWidth={2} className="text-[#C49A7A]" />
+        </h1>
         <p className="text-[13px] text-[#aaa] mt-1 mb-0">Here's today's summary at Makeova Salon</p>
       </div>
 
@@ -347,6 +355,18 @@ const ReceptionistDashboard: React.FC = () => {
           </svg>
           View Schedule
         </button>
+      </div>
+
+      <div className="mb-6">
+        <ProviderScheduleCalendar
+          title="Provider Weekly Calendar"
+          subtitle="Reception can check provider schedule, open days, booked time blocks, and approved leave before creating appointments."
+          providers={providerUsers}
+          appointments={calendarAppointments}
+          leaves={teamLeaves}
+          leaveScopeLabel="Provider Leave Tracker"
+          emptyMessage="No providers found for the receptionist calendar."
+        />
       </div>
 
       <div className="grid grid-cols-1 gap-6 mb-6 xl:grid-cols-2">
@@ -516,8 +536,10 @@ const ReceptionistDashboard: React.FC = () => {
           }}
         />
       )}
+      </div>
     </ReceptionistLayout>
   )
 }
 
 export default ReceptionistDashboard
+

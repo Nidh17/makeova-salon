@@ -12,10 +12,12 @@ import {
   rejectLeave,
   STATUS_STYLE,
 } from '@/api/AppointmentsApi'
-import { getAllUsers } from '@/api/Userapi'
+import ProviderScheduleCalendar from '@/features/appointments/ProviderScheduleCalendar'
+import { filterUsersByRole, getAllUsers } from '@/api/Userapi'
 import { getAllServices } from '@/api/services/servicesApi'
 import Pagination from '@/components/shared/Pagination'
 import { SkeletonBlock, StatCardSkeletons, TableSkeleton } from '@/components/shared/Skeleton'
+import { IUser } from '@/types'
 import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from '@/utils/pagination'
 
 const LEAVE_STATUS_STYLE = {
@@ -61,7 +63,7 @@ interface DashboardData {
   leaveRequests: ILeave[]
 }
 
-type DashboardTab = 'appointments' | 'leaves'
+type DashboardTab = 'appointments' | 'calendar' | 'leaves'
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate()
@@ -75,6 +77,10 @@ const AdminDashboard: React.FC = () => {
   const [leavePageSize, setLeavePageSize] = useState(DEFAULT_PAGE_SIZE)
   const [leaveActionLoading, setLeaveActionLoading] = useState<string | null>(null)
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null)
+  const [providerUsers, setProviderUsers] = useState<IUser[]>([])
+  const [teamLeaveUsers, setTeamLeaveUsers] = useState<IUser[]>([])
+  const [calendarAppointments, setCalendarAppointments] = useState<IAppointment[]>([])
+  const [calendarLeaves, setCalendarLeaves] = useState<ILeave[]>([])
 
   const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
     setToast({ msg, type })
@@ -86,19 +92,19 @@ const AdminDashboard: React.FC = () => {
     setError('')
 
     try {
-      const [appointments, users, services, leaves, staffUsers] = await Promise.all([
-        getAllAppointments({ page: 1, limit: 10 }),
-        getAllUsers({ page: 1, limit: 10 }),
-        getAllServices({ page: 1, limit: 10 }),
+      const [appointments, users, services, leaves] = await Promise.all([
+        getAllAppointments({ page: 1, limit: 200 }),
+        getAllUsers({ page: 1, limit: 500 }),
+        getAllServices({ page: 1, limit: 100 }),
         getAllLeaves({ page: 1, limit: 100 }),
-        getAllUsers({ page: 1, limit: 500, role: 'staff' }),
       ])
 
       const appointmentItems = appointments.items
       const userItems = users.items
       const serviceItems = services.items
       const leaveItems = leaves.items
-      const allStaffItems = staffUsers.items
+      const allStaffItems = filterUsersByRole(userItems, 'staff')
+      const receptionistUsers = filterUsersByRole(userItems, 'receptionist')
 
       const userLookup = new Map(userItems.map(user => [user._id, user]))
 
@@ -154,6 +160,11 @@ const AdminDashboard: React.FC = () => {
           const matchedUser = userLookup.get(leave.staffId)
           return matchedUser ? { ...leave, staffId: matchedUser } : leave
         })
+
+      setProviderUsers(allStaffItems)
+      setTeamLeaveUsers([...allStaffItems, ...receptionistUsers])
+      setCalendarAppointments(appointmentItems)
+      setCalendarLeaves(leaveRequests)
 
       setData({
         totalAppointments: appointmentItems.length,
@@ -323,6 +334,7 @@ const AdminDashboard: React.FC = () => {
         </div>
       )}
 
+      <div className="rounded-[34px] border border-[#dfe3e8] bg-[linear-gradient(180deg,#fbfbf9_0%,#f4f5f2_55%,#eef0ec_100%)] p-6 shadow-[0_16px_40px_rgba(31,41,51,0.08)]">
       <div className="mb-8 rounded-[26px] border border-[#e2d0c2] bg-[#fbf7f2] px-7 py-7 shadow-[0_14px_28px_rgba(78,49,32,0.06)]">
         <div className="mb-6 flex items-end justify-between gap-5">
           <div>
@@ -396,6 +408,10 @@ const AdminDashboard: React.FC = () => {
             >
               View Calendar
             </button>
+          ) : activeTab === 'calendar' ? (
+            <span className="text-[11px] uppercase tracking-[0.12em] text-[#1A73E8] bg-[#E8F0FE] px-3 py-2 rounded-full font-sans font-semibold">
+              {providerUsers.length} providers
+            </span>
           ) : (
             <span className="text-[11px] uppercase tracking-[0.12em] text-[#9A5F3C] bg-[#FDF0EB] px-3 py-2 rounded-full font-sans font-semibold">
               {data.leaveRequests.filter(leave => leave.status === 'pending').length} pending
@@ -407,6 +423,7 @@ const AdminDashboard: React.FC = () => {
           <div className="inline-flex rounded-[16px] border border-[#e3d2c4] bg-[#f3e7dc] p-1">
             {[
               { key: 'appointments' as const, label: 'Recent Appointments' },
+              { key: 'calendar' as const, label: 'Provider Calendar' },
               { key: 'leaves' as const, label: 'Leave Approvals' },
             ].map(tab => {
               const isActive = activeTab === tab.key
@@ -496,6 +513,20 @@ const AdminDashboard: React.FC = () => {
               />
             </>
           )
+        ) : activeTab === 'calendar' ? (
+          <div className="px-6 py-6 bg-[#ffffff]">
+            <ProviderScheduleCalendar
+              title="Provider Weekly Calendar"
+              subtitle="Admin can review provider booking flow and track provider plus receptionist leave from one view."
+              providers={providerUsers}
+              appointments={calendarAppointments}
+              leaves={calendarLeaves}
+              leaveUsers={teamLeaveUsers}
+              leaveScope="team"
+              leaveScopeLabel="Team Leave Tracker"
+              emptyMessage="No providers found for the calendar view."
+            />
+          </div>
         ) : data.leaveRequests.length === 0 ? (
           <div className="py-12 text-center">
             <p className="text-[13px] text-[#aaa] font-serif m-0">No leave requests yet.</p>
@@ -596,6 +627,7 @@ const AdminDashboard: React.FC = () => {
             />
           </>
         )}
+      </div>
       </div>
     </AdminLayout>
   )

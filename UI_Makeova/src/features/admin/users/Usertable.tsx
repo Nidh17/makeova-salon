@@ -8,9 +8,10 @@ import type { PaginationMeta } from '@/types';
 import { createEmptyPagination, DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from '@/utils/pagination';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { getWorkingDayLabel } from '@/features/appointments/appointmentUtils';
+import { Scissors, User, UserRoundCheck, type LucideIcon } from 'lucide-react';
 
 
-// ── Modal ─────────────────────────────────────────────────
+// â”€â”€ Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const Modal: React.FC<{ title: string; onClose: () => void; children: React.ReactNode }> = ({ title, onClose, children }) => (
   <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
     <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" onClick={onClose} />
@@ -28,7 +29,7 @@ const Modal: React.FC<{ title: string; onClose: () => void; children: React.Reac
   </div>
 )
 
-// ── Delete confirm ────────────────────────────────────────
+// â”€â”€ Delete confirm â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const DeleteConfirm: React.FC<{
   user: IUser; onConfirm: () => void; onCancel: () => void; loading: boolean
 }> = ({ user, onConfirm, onCancel, loading }) => (
@@ -58,32 +59,37 @@ const DeleteConfirm: React.FC<{
   </div>
 )
 
-// ── Config per role type ───────────────────────────────────
+// â”€â”€ Config per role type â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const ROLE_CONFIG = {
   staff: {
     label:   'Provider',
     plural:  'Providers',
     color:   '#7AC49A',
     bg:      '#E8F5E9',
-    icon:    '✂️',
+    icon:    Scissors,
   },
   receptionist: {
     label:   'Receptionist',
     plural:  'Receptionists',
     color:   '#7A9EC4',
     bg:      '#EBF3FD',
-    icon:    '💁',
+    icon:    UserRoundCheck,
   },
   customer: {
     label:   'Customer',
     plural:  'Customers',
     color:   '#C49A7A',
     bg:      '#FDF0EB',
-    icon:    '👤',
+    icon:    User,
   },
-}
-
-// ── Props ─────────────────────────────────────────────────
+} satisfies Record<UserRoleType, {
+  label: string
+  plural: string
+  color: string
+  bg: string
+  icon: LucideIcon
+}>
+// â”€â”€ Props â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 interface UserTableProps {
   roleType: UserRoleType
   Layout:   React.FC<{ children: React.ReactNode }>
@@ -114,7 +120,7 @@ const UserTable: React.FC<UserTableProps> = ({ roleType, Layout }) => {
     setTimeout(() => setToast(null), 3000)
   }
 
-  // ── Fetch & filter by role name ───────────────────────
+  // â”€â”€ Fetch & filter by role name â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const fetchUsers = useCallback(async (preserveTable = hasLoadedOnceRef.current) => {
     if (preserveTable) {
       setRefreshing(true)
@@ -146,7 +152,7 @@ const UserTable: React.FC<UserTableProps> = ({ roleType, Layout }) => {
     setCurrentPage(1)
   }, [pageSize, debouncedSearch, roleType])
 
-  // ── CRUD handlers ─────────────────────────────────────
+  // â”€â”€ CRUD handlers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const handleCreate = async (data: UserFormData) => {
     await createUser(data)
     await fetchUsers(true)
@@ -206,7 +212,7 @@ const UserTable: React.FC<UserTableProps> = ({ roleType, Layout }) => {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-[22px] font-bold text-[#2d2d2d] m-0 font-serif">Manage {cfg.plural}</h1>
-          <p className="text-[13px] text-[#aaa] mt-1 mb-0">{pagination.totalItems} {cfg.plural.toLowerCase()} total {refreshing ? '· updating...' : ''}</p>
+          <p className="text-[13px] text-[#aaa] mt-1 mb-0">{pagination.totalItems} {cfg.plural.toLowerCase()} total {refreshing ? '� updating...' : ''}</p>
         </div>
         <button
           onClick={() => setShowCreate(true)}
@@ -236,7 +242,7 @@ const UserTable: React.FC<UserTableProps> = ({ roleType, Layout }) => {
         ].map(({ label, value, color, bg }) => (
           <div key={label} className="bg-white rounded-xl border border-[#F0DDD5] px-5 py-4 flex items-center gap-4 shadow-[0_2px_8px_rgba(196,154,122,0.07)]">
             <div className="w-11 h-11 rounded-xl flex items-center justify-center text-[20px]" style={{ background: bg }}>
-              {cfg.icon}
+              <cfg.icon size={20} strokeWidth={1.8} />
             </div>
             <div>
               <p className="text-[20px] font-bold m-0 font-serif" style={{ color }}>{value}</p>
@@ -291,7 +297,7 @@ const UserTable: React.FC<UserTableProps> = ({ roleType, Layout }) => {
         {/* Empty */}
         {!loading && !error && users.length === 0 && (
           <div className="py-16 text-center">
-            <div className="text-[32px] mb-3">{cfg.icon}</div>
+            <div className="text-[32px] mb-3"><cfg.icon size={20} strokeWidth={1.8} /></div>
             <p className="text-[14px] font-bold text-[#2d2d2d] m-0 mb-1 font-serif">No {cfg.plural.toLowerCase()} found</p>
             <p className="text-[12px] text-[#aaa] m-0">
               {debouncedSearch ? 'Try a different search' : `Click "Add ${cfg.label}" to get started`}
@@ -398,3 +404,4 @@ const UserTable: React.FC<UserTableProps> = ({ roleType, Layout }) => {
 }
 
 export default UserTable
+

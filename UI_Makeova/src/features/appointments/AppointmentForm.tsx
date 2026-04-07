@@ -12,7 +12,7 @@ import {
   type ILeave,
 } from '@/api/AppointmentsApi'
 import { getAllUsers } from '@/api/Userapi'
-import { getBookedCount, getWorkingDayLabel, hasConflict, hasCustomerConflict, isOnLeave, isPastSlot, isWorkingOnDate } from './appointmentUtils'
+import { exceedsBusinessHours, getBookedCount, getWorkingDayLabel, hasConflict, hasCustomerConflict, isOnLeave, isPastSlot, isWorkingOnDate } from './appointmentUtils'
 
 interface BookAppointmentFormProps {
   onSuccess: () => void
@@ -315,8 +315,14 @@ const BookAppointmentForm: React.FC<BookAppointmentFormProps> = ({ onSuccess, on
       if (selectedProvider && !isWorkingOnDate(selectedProvider, date)) {
         nextErrors.staffId = 'This provider is on weekly off for the selected date'
       }
+      if (isOnLeave(staffId, date, leaves)) {
+        nextErrors.staffId = 'This provider is on leave for the selected date'
+      }
     }
     if (date && slot && isPastSlot(date, slot)) nextErrors.slot = 'This time slot has already passed'
+    if (date && slot && duration > 0 && exceedsBusinessHours(date, slot, duration)) {
+      nextErrors.slot = 'Select a start time before salon closing time'
+    }
     if (customerId && date && slot && duration > 0 && hasCustomerConflict(customerId, date, slot, appointments, duration)) {
       nextErrors.slot = 'This customer already has another appointment at this time'
     }
@@ -546,7 +552,8 @@ const BookAppointmentForm: React.FC<BookAppointmentFormProps> = ({ onSuccess, on
               const providerConflict = hasConflict(staffId, date, time, appointments, duration)
               const customerConflict = customerId ? hasCustomerConflict(customerId, date, time, appointments, duration) : false
               const pastSlot = isPastSlot(date, time)
-              const blocked = providerConflict || customerConflict || pastSlot
+              const afterHours = exceedsBusinessHours(date, time, duration)
+              const blocked = providerConflict || customerConflict || pastSlot || afterHours
               const selected = slot === time
 
               return (

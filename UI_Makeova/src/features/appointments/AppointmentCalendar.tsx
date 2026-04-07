@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import AdminLayout from '../admin/AdminLayout'
+import { ClipboardList } from 'lucide-react'
 import { AppointmentStatus, formatDate, formatTime, getAllAppointments, getField, IAppointment, STATUS_STYLE, updateAppointmentStatus } from '@/api/AppointmentsApi'
 import StaffAvailabilityTable from './staffaviablitytable'
 import BookAppointmentForm from './AppointmentForm'
@@ -152,7 +153,7 @@ const AppointmentCalendar: React.FC = () => {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-[22px] font-bold text-[#2d2d2d] m-0 font-serif">Appointments</h1>
-            <p className="text-[13px] text-[#aaa] mt-1 mb-0">{stats.total} total · {stats.confirmed} confirmed {refreshing ? '· updating...' : ''}</p>
+            <p className="text-[13px] text-[#aaa] mt-1 mb-0">{stats.total} total � {stats.confirmed} confirmed {refreshing ? '� updating...' : ''}</p>
           </div>
           <button
             onClick={() => setShowBook(true)}
@@ -265,7 +266,7 @@ const AppointmentCalendar: React.FC = () => {
 
             {!loading && filteredAppointments.length === 0 && (
               <div className="py-16 text-center">
-                <div className="text-[32px] mb-2">📋</div>
+                <div className="mb-2 flex justify-center text-[#C49A7A]"><ClipboardList size={30} strokeWidth={1.8} /></div>
                 <p className="text-[14px] font-bold text-[#2d2d2d] m-0 font-serif">No appointments found</p>
                 <p className="text-[12px] text-[#aaa] mt-1 m-0">Try a different filter or book a new appointment</p>
               </div>
@@ -289,7 +290,7 @@ const AppointmentCalendar: React.FC = () => {
 
                   <div>
                     <p className="text-[13px] text-[#666] m-0 font-serif truncate">
-                      {(!apt.services || typeof apt.services === 'string') ? '—' : apt.services.name}
+                      {(!apt.services || typeof apt.services === 'string') ? '--' : apt.services.name}
                     </p>
                     <p className="text-[11px] text-[#aaa] m-0">
                       {(!apt.services || typeof apt.services === 'string') ? '' : `${apt.services.duration}min`}
@@ -399,3 +400,6 @@ const AppointmentCalendar: React.FC = () => {
 }
 
 export default AppointmentCalendar
+
+
+

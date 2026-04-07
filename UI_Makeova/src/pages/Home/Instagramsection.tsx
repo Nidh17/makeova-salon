@@ -1,13 +1,13 @@
 import React from 'react'
 
-// 🔁 Replace with your actual asset filenames
+// Replace with your actual asset filenames
 import insta1 from '@/assets/hair.jpg'
 import insta2 from '@/assets/nail3.jpg'
 import insta3 from '@/assets/makeup.jpg'
 import insta4 from '@/assets/hair s.jpg'
 import instaLarge from '@/assets/insta1.jpg'
 
-// 🔁 Replace with your actual background image
+// Replace with your actual background image
 import instaBg from '@/assets/salaon bg 2.jpg'
 
 const InstagramSection: React.FC = () => {
@@ -58,7 +58,7 @@ const InstagramSection: React.FC = () => {
           INSTAGRAM
         </h2>
 
-        {/* Photo grid: 1 big left + 2×2 right — photos pop over blurred bg */}
+        {/* Photo grid: 1 big left + 2Ã—2 right â€” photos pop over blurred bg */}
         <div style={{
           maxWidth: 860,
           margin: '0 auto 28px auto',
@@ -89,7 +89,7 @@ const InstagramSection: React.FC = () => {
             />
           </div>
 
-          {/* Right 2×2 grid */}
+          {/* Right 2Ã—2 grid */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             {gridPhotos.map((src, i) => (
               <div key={i} style={{

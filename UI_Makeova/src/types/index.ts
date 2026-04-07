@@ -94,7 +94,7 @@ export interface RegisterRequest {
 }
 
 // ── Module constants ──────────────────────────────────────
-// ✅ Array (not object) — supports .forEach / .filter / .map
+// Array (not object) - supports .forEach / .filter / .map
 export const MODULES = [
   'user',
   'appointment',

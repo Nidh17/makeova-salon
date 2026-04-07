@@ -31,7 +31,7 @@ const ReceptionistBooking: React.FC = () => {
   }
 
   useEffect(() => {
-    loadAppointments(1, pageSize)
+    void loadAppointments(1, pageSize)
   }, [pageSize])
 
   const handleSuccess = async () => {
@@ -128,7 +128,7 @@ const ReceptionistBooking: React.FC = () => {
         currentPage={currentPage}
         onPageChange={page => {
           setCurrentPage(page)
-          loadAppointments(page)
+          void loadAppointments(page)
         }}
         onPageSizeChange={nextPageSize => {
           setPageSize(nextPageSize)

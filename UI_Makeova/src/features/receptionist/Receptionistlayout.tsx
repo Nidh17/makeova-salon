@@ -349,30 +349,7 @@ const ReceptionistLayout: React.FC<ReceptionistLayoutProps> = ({ children }) => 
             >
               {user?.name?.charAt(0) ?? 'R'}
             </div>
-            <button
-              onClick={handleLogout}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 8,
-                padding: '10px 14px',
-                borderRadius: 999,
-                border: `1px solid ${shellStyles.border}`,
-                background: 'rgba(255,255,255,0.92)',
-                color: shellStyles.text,
-                cursor: 'pointer',
-                fontSize: 12,
-                fontWeight: 600,
-                fontFamily: '"Inter", system-ui, sans-serif',
-              }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                <polyline points="16 17 21 12 16 7" />
-                <line x1="21" y1="12" x2="9" y2="12" />
-              </svg>
-              Logout
-            </button>
+            
           </div>
         </header>
 
