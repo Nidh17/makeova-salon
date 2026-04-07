@@ -33,7 +33,8 @@ const formatLeaveType = (type: ILeave['type']) =>
 
 const getLeaveRoleLabel = (leave: ILeave) => {
   if (!leave.staffId) return 'Team Member'
-  if (typeof leave.staffId === 'string') return 'Team Member'
+  if (typeof leave.staffId === 'object') return leave.staffId?.name
+
 
   const roleNames = Array.isArray((leave.staffId as unknown as { role?: Array<string | { name?: string }> }).role)
     ? ((leave.staffId as unknown as { role?: Array<string | { name?: string }> }).role ?? [])
@@ -602,7 +603,7 @@ const AdminDashboard: React.FC = () => {
                               </button>
                             </div>
                           ) : (
-                            <span className="text-[11px] text-[#aaa] font-serif">Action completed</span>
+                            <span className="text-[11px] text-[#aaa] font-serif">Decision recorded</span>
                           )}
                         </td>
                       </tr>
