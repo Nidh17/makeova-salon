@@ -162,11 +162,11 @@ const ReceptionistDashboard: React.FC = () => {
   const [todayCount, setTodayCount] = useState(0)
   const [leaveLoading, setLeaveLoading] = useState(true)
   const [leaveActionLoading, setLeaveActionLoading] = useState<string | null>(null)
-  const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null)
+  const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' | 'info' } | null>(null)
   const [providerUsers, setProviderUsers] = useState<IUser[]>([])
   const [calendarAppointments, setCalendarAppointments] = useState<IAppointment[]>([])
 
-  const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
+  const showToast = (msg: string, type: 'success' | 'error' | 'info' = 'success') => {
     setToast({ msg, type })
     window.setTimeout(() => setToast(null), 2600)
   }
@@ -255,6 +255,10 @@ const ReceptionistDashboard: React.FC = () => {
     }
   }
 
+  const handleDeleteAppointment = () => {
+    showToast('Please contact admin to delete this appointment.', 'info')
+  }
+
   const handleCancelLeave = async (leaveId: string) => {
     const leave = myLeaves.find(item => item._id === leaveId)
     if (!leave || leave.status !== 'pending') return
@@ -281,7 +285,9 @@ const ReceptionistDashboard: React.FC = () => {
   return (
     <ReceptionistLayout>
       {toast && (
-        <div className={`fixed top-5 right-5 z-[500] flex items-center gap-2 px-4 py-3 rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.15)] text-white text-[12px] font-serif ${toast.type === 'success' ? 'bg-[#4CAF50]' : 'bg-[#E53935]'}`}>
+        <div className={`fixed top-5 right-5 z-[500] flex items-center gap-2 px-4 py-3 rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.15)] text-white text-[12px] font-serif ${
+          toast.type === 'success' ? 'bg-[#4CAF50]' : toast.type === 'error' ? 'bg-[#E53935]' : 'bg-[#9B5C74]'
+        }`}>
           {toast.msg}
         </div>
       )}
@@ -469,6 +475,7 @@ const ReceptionistDashboard: React.FC = () => {
           onCancel={cancelAppt}
           onConfirm={confirmAppt}
           onComplete={completeAppt}
+          onDelete={handleDeleteAppointment}
           showActions={true}
           actorRole="receptionist"
           pageSize={10}

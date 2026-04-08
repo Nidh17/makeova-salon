@@ -13,7 +13,7 @@ import AdminDashboard      from '../features/admin/AdminDashboard'
 import ManageReceptionists from '../features/admin/users/ManageReceptionists'
 import ManageCustomers     from '../features/admin/users/MangeCustomer'
 import Reports             from '../features/admin/Reports'
-import AppointmentCalendar from '../features/appointments/AppointmentCalendar'
+import AdminAppointmentCalendar from '../features/appointments/AdminAppointmentCalendar'
 
 
 // ── Receptionist pages ────────────────────────────────────
@@ -82,7 +82,7 @@ const AppRouter: React.FC = () => {
           <PrivateRoute requiredPortal="admin"><ManageCustomers /></PrivateRoute>
         } />
         <Route path="/admin/appointments" element={
-          <PrivateRoute requiredPortal="admin"><AppointmentCalendar /></PrivateRoute>
+          <PrivateRoute requiredPortal="admin"><AdminAppointmentCalendar /></PrivateRoute>
         } />
         <Route path="/admin/reports" element={
           <PrivateRoute requiredPortal="admin"><Reports /></PrivateRoute>

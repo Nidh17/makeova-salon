@@ -142,8 +142,7 @@ const UserForm: React.FC<UserFormProps> = ({ mode, roleType, initial, onSubmit, 
     else if (!/^\d{10}$/.test(form.phonenumber.trim())) e.phonenumber = 'Phone number must be exactly 10 digits'
     if (!form.gender)             e.gender      = 'Gender is required'
     if (!form.address.trim())     e.address     = 'Address is required'
-    if (!form.dob) e.dob = 'Date of birth is required'
-    else if (getAgeFromDob(form.dob) < MINIMUM_AGE) e.dob = 'User must be at least 18 years old'
+    if (form.dob && getAgeFromDob(form.dob) < MINIMUM_AGE) e.dob = 'User must be at least 18 years old'
     if (roleType === 'staff' && (!form.WorkingDay || form.WorkingDay.length === 0)) {
       e.WorkingDay = 'Select at least 1 working day'
     }

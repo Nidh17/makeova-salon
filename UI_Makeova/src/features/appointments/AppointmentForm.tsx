@@ -10,6 +10,7 @@ import {
   TIME_SLOTS,
   type IAppointment,
   type ILeave,
+  updateAppointment,
 } from '@/api/AppointmentsApi'
 import { getAllUsers } from '@/api/Userapi'
 import { exceedsBusinessHours, getBookedCount, getWorkingDayLabel, hasConflict, hasCustomerConflict, isOnLeave, isPastSlot, isWorkingOnDate } from './appointmentUtils'
@@ -18,6 +19,7 @@ interface BookAppointmentFormProps {
   onSuccess: () => void
   onCancel: () => void
   preStaffId?: string
+  appointment?: IAppointment | null
 }
 
 interface PickerProps {
@@ -205,8 +207,9 @@ const UserPicker: React.FC<PickerProps> = ({
   )
 }
 
-const BookAppointmentForm: React.FC<BookAppointmentFormProps> = ({ onSuccess, onCancel, preStaffId }) => {
+const BookAppointmentForm: React.FC<BookAppointmentFormProps> = ({ onSuccess, onCancel, preStaffId, appointment }) => {
   const currentUser = useAppSelector(selectUser)
+  const isEditMode = Boolean(appointment?._id)
 
   const [customers, setCustomers] = useState<IUser[]>([])
   const [staffList, setStaffList] = useState<IUser[]>([])
@@ -231,6 +234,10 @@ const BookAppointmentForm: React.FC<BookAppointmentFormProps> = ({ onSuccess, on
   const selectedService = services.find(service => service._id === serviceId)
   const selectedCustomer = customers.find(customer => customer._id === customerId)
   const selectedStaff = staffList.find(staff => staff._id === staffId)
+  const comparisonAppointments = useMemo(
+    () => appointments.filter(item => item._id !== appointment?._id),
+    [appointment?._id, appointments]
+  )
   const duration = selectedService?.duration ?? 0
   const totalPrice = selectedService?.price ?? 0
 
@@ -292,6 +299,29 @@ const BookAppointmentForm: React.FC<BookAppointmentFormProps> = ({ onSuccess, on
     }
   }, [preStaffId])
 
+  useEffect(() => {
+    if (!appointment) return
+
+    const currentCustomerId = typeof appointment.userID === 'string' ? appointment.userID : appointment.userID?._id || ''
+    const currentStaffId = typeof appointment.staffID === 'string' ? appointment.staffID : appointment.staffID?._id || ''
+    const currentServiceId = typeof appointment.services === 'string' ? appointment.services : appointment.services?._id || ''
+    const appointmentDate = appointment.appointmentDate ? new Date(appointment.appointmentDate) : null
+    const appointmentStart = appointment.startTime ? new Date(appointment.startTime) : null
+
+    setCustomerId(currentCustomerId)
+    setCustomerQuery(typeof appointment.userID === 'string' ? appointment.userID : appointment.userID?.name || '')
+    setStaffId(currentStaffId)
+    setStaffQuery(typeof appointment.staffID === 'string' ? appointment.staffID : appointment.staffID?.name || '')
+    setServiceId(currentServiceId)
+    setDate(appointmentDate && !Number.isNaN(appointmentDate.getTime()) ? appointmentDate.toISOString().split('T')[0] : '')
+    setSlot(
+      appointmentStart && !Number.isNaN(appointmentStart.getTime())
+        ? `${String(appointmentStart.getHours()).padStart(2, '0')}:${String(appointmentStart.getMinutes()).padStart(2, '0')}`
+        : ''
+    )
+    setNote(appointment.note || '')
+  }, [appointment])
+
   const availableStaff = useMemo(() => {
     if (!date) return []
 
@@ -323,10 +353,10 @@ const BookAppointmentForm: React.FC<BookAppointmentFormProps> = ({ onSuccess, on
     if (date && slot && duration > 0 && exceedsBusinessHours(date, slot, duration)) {
       nextErrors.slot = 'Select a start time before salon closing time'
     }
-    if (customerId && date && slot && duration > 0 && hasCustomerConflict(customerId, date, slot, appointments, duration)) {
+    if (customerId && date && slot && duration > 0 && hasCustomerConflict(customerId, date, slot, comparisonAppointments, duration)) {
       nextErrors.slot = 'This customer already has another appointment at this time'
     }
-    if (staffId && date && slot && duration > 0 && hasConflict(staffId, date, slot, appointments, duration)) {
+    if (staffId && date && slot && duration > 0 && hasConflict(staffId, date, slot, comparisonAppointments, duration)) {
       nextErrors.slot = 'This provider is already booked for this time'
     }
 
@@ -348,22 +378,29 @@ const BookAppointmentForm: React.FC<BookAppointmentFormProps> = ({ onSuccess, on
     setApiErr('')
 
     try {
-      await createAppointment({
+      const payload = {
         userID: customerId,
         staffID: staffId,
-        receptionistId: currentUser._id,
+        receptionistId:
+          (typeof appointment?.receptionistId === 'string' ? appointment.receptionistId : appointment?.receptionistId?._id) || currentUser._id,
         services: serviceId,
         appointmentDate: new Date(date).toISOString(),
         startTime: new Date(`${date}T${slot}:00`).toISOString(),
         endTime: getEndTime(),
         totalPrice,
         note: note.trim() || undefined,
-        status: 'pending',
-      })
+        status: appointment?.status || 'pending',
+      }
+
+      if (appointment?._id) {
+        await updateAppointment(appointment._id, payload)
+      } else {
+        await createAppointment(payload)
+      }
 
       onSuccess()
     } catch (error) {
-      setApiErr(error instanceof Error ? error.message : 'Failed to book appointment')
+      setApiErr(error instanceof Error ? error.message : `Failed to ${isEditMode ? 'update' : 'book'} appointment`)
     } finally {
       setLoading(false)
     }
@@ -512,7 +549,7 @@ const BookAppointmentForm: React.FC<BookAppointmentFormProps> = ({ onSuccess, on
             placeholder={date ? 'Search available provider' : 'Select a date first'}
             emptyMessage={date ? 'No provider is working or available on this date' : 'Select a date to load provider availability'}
             renderMeta={user => {
-              const booked = date ? getBookedCount(user._id, date, appointments) : 0
+              const booked = date ? getBookedCount(user._id, date, comparisonAppointments) : 0
               return date
                 ? `${getWorkingDayLabel(user.WorkingDay)} · ${booked} booking(s)`
                 : `${getWorkingDayLabel(user.WorkingDay)} · ${user.email}`
@@ -523,7 +560,7 @@ const BookAppointmentForm: React.FC<BookAppointmentFormProps> = ({ onSuccess, on
             <DetailPopover
               user={detailUser}
               onClose={() => setDetailUser(null)}
-              bookedToday={date ? getBookedCount(detailUser._id, date, appointments) : undefined}
+              bookedToday={date ? getBookedCount(detailUser._id, date, comparisonAppointments) : undefined}
               isOnLeaveToday={date ? isOnLeave(detailUser._id, date, leaves) : undefined}
             />
           )}
@@ -549,8 +586,8 @@ const BookAppointmentForm: React.FC<BookAppointmentFormProps> = ({ onSuccess, on
 
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
             {TIME_SLOTS.map(time => {
-              const providerConflict = hasConflict(staffId, date, time, appointments, duration)
-              const customerConflict = customerId ? hasCustomerConflict(customerId, date, time, appointments, duration) : false
+              const providerConflict = hasConflict(staffId, date, time, comparisonAppointments, duration)
+              const customerConflict = customerId ? hasCustomerConflict(customerId, date, time, comparisonAppointments, duration) : false
               const pastSlot = isPastSlot(date, time)
               const afterHours = exceedsBusinessHours(date, time, duration)
               const blocked = providerConflict || customerConflict || pastSlot || afterHours
@@ -628,7 +665,7 @@ const BookAppointmentForm: React.FC<BookAppointmentFormProps> = ({ onSuccess, on
           className="flex flex-1 items-center justify-center gap-2 rounded-xl border-none py-[11px] text-[13px] font-semibold text-white font-serif cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
           style={{ background: 'linear-gradient(135deg,#C49A7A,#E8B89A)' }}
         >
-          {loading ? 'Booking...' : 'Book Appointment'}
+          {loading ? (isEditMode ? 'Saving...' : 'Booking...') : (isEditMode ? 'Save Changes' : 'Book Appointment')}
         </button>
       </div>
     </form>

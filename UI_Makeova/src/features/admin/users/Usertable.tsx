@@ -89,7 +89,6 @@ const ROLE_CONFIG = {
   bg: string
   icon: LucideIcon
 }>
-// â”€â”€ Props â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 interface UserTableProps {
   roleType: UserRoleType
   Layout:   React.FC<{ children: React.ReactNode }>
@@ -120,7 +119,6 @@ const UserTable: React.FC<UserTableProps> = ({ roleType, Layout }) => {
     setTimeout(() => setToast(null), 3000)
   }
 
-  // â”€â”€ Fetch & filter by role name â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const fetchUsers = useCallback(async (preserveTable = hasLoadedOnceRef.current) => {
     if (preserveTable) {
       setRefreshing(true)
@@ -404,3 +402,4 @@ const UserTable: React.FC<UserTableProps> = ({ roleType, Layout }) => {
 }
 
 export default UserTable
+

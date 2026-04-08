@@ -13,9 +13,16 @@ const ReceptionistBooking: React.FC = () => {
   const [successMsg, setSuccessMsg] = useState(false)
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
+  const [editingAppointment, setEditingAppointment] = useState<IAppointment | null>(null)
+  const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' | 'info' } | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
   const [pagination, setPagination] = useState<PaginationMeta>(EMPTY_PAGINATION)
+
+  const showToast = (msg: string, type: 'success' | 'error' | 'info' = 'success') => {
+    setToast({ msg, type })
+    window.setTimeout(() => setToast(null), 3000)
+  }
 
   const loadAppointments = async (page = currentPage, limit = pageSize) => {
     try {
@@ -37,8 +44,13 @@ const ReceptionistBooking: React.FC = () => {
   const handleSuccess = async () => {
     setSuccessMsg(true)
     setShowForm(false)
+    setEditingAppointment(null)
     setTimeout(() => setSuccessMsg(false), 3000)
     await loadAppointments(currentPage)
+  }
+
+  const handleDelete = async (appointment: IAppointment) => {
+    showToast('Please contact admin to delete this appointment.', 'info')
   }
 
   const cancelAppt = async (id: string) => {
@@ -70,6 +82,14 @@ const ReceptionistBooking: React.FC = () => {
 
   return (
     <ReceptionistLayout>
+      {toast && (
+        <div className={`fixed top-5 right-5 z-[500] flex items-center gap-2.5 px-5 py-3.5 rounded-xl shadow-lg text-white text-[13px] font-serif ${
+          toast.type === 'success' ? 'bg-[#4CAF50]' : toast.type === 'error' ? 'bg-[#E53935]' : 'bg-[#9B5C74]'
+        }`}>
+          {toast.msg}
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-[22px] font-bold text-[#2d2d2d] m-0 font-serif">All Appointments</h1>
@@ -121,6 +141,11 @@ const ReceptionistBooking: React.FC = () => {
         onCancel={cancelAppt}
         onConfirm={confirmAppt}
         onComplete={completeAppt}
+        onEdit={appointment => {
+          setEditingAppointment(appointment)
+          setShowForm(true)
+        }}
+        onDelete={handleDelete}
         showActions={true}
         actorRole="receptionist"
         pageSize={pageSize}
@@ -141,9 +166,12 @@ const ReceptionistBooking: React.FC = () => {
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.2)] w-full max-w-[540px] max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between px-6 py-5 border-b border-[#F0DDD5] bg-gradient-to-r from-[#FDF6F2] to-white sticky top-0 z-10">
-              <h3 className="text-[17px] font-bold text-[#2d2d2d] m-0 font-serif">Book New Appointment</h3>
+              <h3 className="text-[17px] font-bold text-[#2d2d2d] m-0 font-serif">{editingAppointment ? 'Edit Appointment' : 'Book New Appointment'}</h3>
               <button
-                onClick={() => setShowForm(false)}
+                onClick={() => {
+                  setShowForm(false)
+                  setEditingAppointment(null)
+                }}
                 className="w-8 h-8 rounded-full bg-[#FDF6F2] flex items-center justify-center border-none cursor-pointer text-[#999] hover:text-[#C49A7A] hover:bg-[#F5C8BC] transition-all"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -153,7 +181,14 @@ const ReceptionistBooking: React.FC = () => {
               </button>
             </div>
             <div className="px-6 py-6">
-              <AppointmentForm onSuccess={handleSuccess} onCancel={() => setShowForm(false)} />
+              <AppointmentForm
+                appointment={editingAppointment}
+                onSuccess={handleSuccess}
+                onCancel={() => {
+                  setShowForm(false)
+                  setEditingAppointment(null)
+                }}
+              />
             </div>
           </div>
         </div>

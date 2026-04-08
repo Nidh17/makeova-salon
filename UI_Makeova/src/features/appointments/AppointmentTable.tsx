@@ -1,4 +1,5 @@
 import React from 'react'
+import { Check, CheckCheck, ChevronDown, Pencil, Trash2, X } from 'lucide-react'
 import type { IAppointment } from '@/api/AppointmentsApi'
 import type { PaginationMeta } from '@/types'
 import {
@@ -21,6 +22,8 @@ interface AppointmentTableProps {
   onCancel?: (id: string) => void
   onConfirm?: (id: string) => void
   onComplete?: (id: string) => void
+  onEdit?: (appointment: IAppointment) => void
+  onDelete?: (appointment: IAppointment) => void
   compact?: boolean
   showActions?: boolean
   actorRole?: AppointmentActorRole
@@ -35,23 +38,23 @@ interface AppointmentTableProps {
 
 const TABLE_THEME = {
   admin: {
-    card: 'border-[#F0DDD5] shadow-[0_2px_16px_rgba(196,154,122,0.08)]',
-    head: 'bg-[#FDF6F2] border-[#F0DDD5]',
-    headText: 'text-[#aaa]',
-    row: 'border-[#F9F0EC] hover:bg-[#FDFAF8]',
+    card: 'border-[#EAD8CB] shadow-[0_12px_30px_rgba(196,154,122,0.10)]',
+    head: 'bg-[linear-gradient(180deg,#FCF7F3_0%,#F8EFE8_100%)] border-[#EAD8CB]',
+    headText: 'text-[#9D8777]',
+    row: 'border-[#F4E8E0] hover:bg-[#FFFDFC]',
     emptyCard: 'border-[#F0DDD5] shadow-[0_2px_8px_rgba(196,154,122,0.05)]',
     emptyIconBg: 'bg-[#FDF0EB]',
     emptyIconStroke: '#C49A7A',
-    title: 'text-[#2d2d2d]',
-    body: 'text-[#666]',
+    title: 'text-[#2F2723]',
+    body: 'text-[#6E625B]',
     price: 'text-[#C49A7A]',
     pagination: 'admin' as const,
   },
   receptionist: {
-    card: 'border-[#E3CFD8] shadow-[0_2px_16px_rgba(155,92,116,0.08)]',
-    head: 'bg-[#FBF3F7] border-[#E3CFD8]',
-    headText: 'text-[#B08E9B]',
-    row: 'border-[#F2E7EC] hover:bg-[#FFF8FB]',
+    card: 'border-[#E3CFD8] shadow-[0_12px_28px_rgba(155,92,116,0.10)]',
+    head: 'bg-[linear-gradient(180deg,#FCF7F9_0%,#F8EEF3_100%)] border-[#E3CFD8]',
+    headText: 'text-[#A68492]',
+    row: 'border-[#F2E7EC] hover:bg-[#FFF9FC]',
     emptyCard: 'border-[#E3CFD8] shadow-[0_2px_8px_rgba(155,92,116,0.05)]',
     emptyIconBg: 'bg-[#F8EAF0]',
     emptyIconStroke: '#9B5C74',
@@ -62,12 +65,16 @@ const TABLE_THEME = {
   },
 }
 
+const iconButtonBase = 'inline-flex h-9 w-9 items-center justify-center rounded-xl border cursor-pointer transition-all'
+
 const AppointmentTable: React.FC<AppointmentTableProps> = ({
   appointments,
   loading = false,
   onCancel,
   onConfirm,
   onComplete,
+  onEdit,
+  onDelete,
   compact = false,
   showActions = true,
   actorRole = 'receptionist',
@@ -80,6 +87,7 @@ const AppointmentTable: React.FC<AppointmentTableProps> = ({
   variant = actorRole === 'receptionist' ? 'receptionist' : 'admin',
 }) => {
   const [internalPage, setInternalPage] = React.useState(1)
+  const [openStatusId, setOpenStatusId] = React.useState<string | null>(null)
   const isControlled = Boolean(pagination && controlledPage !== undefined && onPageChange)
   const currentPage: number = isControlled ? controlledPage ?? 1 : internalPage
 
@@ -105,6 +113,10 @@ const AppointmentTable: React.FC<AppointmentTableProps> = ({
     }
   }, [currentPage, isControlled, totalPages])
 
+  React.useEffect(() => {
+    setOpenStatusId(null)
+  }, [appointments])
+
   if (loading) {
     return <TableSkeleton columns={compact ? 6 : 8} rows={5} compact={compact} />
   }
@@ -128,15 +140,18 @@ const AppointmentTable: React.FC<AppointmentTableProps> = ({
   const columns = compact
     ? ['Customer', 'Provider', 'Service', 'Date', 'Time', 'Status']
     : ['Customer', 'Provider', 'Service', 'Price', 'Date', 'Time', 'Status', 'Actions']
+  const gridTemplateColumns = compact
+    ? 'repeat(6, minmax(0, 1fr))'
+    : 'minmax(180px,1.3fr) minmax(150px,1fr) minmax(160px,1.1fr) minmax(95px,0.7fr) minmax(92px,0.7fr) minmax(150px,1fr) minmax(170px,1.1fr) minmax(96px,0.55fr)'
 
   return (
-    <div className={`bg-white rounded-2xl overflow-hidden ${theme.card}`}>
+    <div className={`bg-white rounded-[24px] overflow-hidden ${theme.card}`}>
       <div
-        className={`table-scroll-head grid gap-4 px-6 py-3 border-b ${theme.head}`}
-        style={{ gridTemplateColumns: compact ? 'repeat(6, 1fr)' : 'repeat(8, 1fr)' }}
+        className={`table-scroll-head grid gap-5 px-7 py-4 border-b ${theme.head}`}
+        style={{ gridTemplateColumns }}
       >
         {columns.map(col => (
-          <span key={col} className={`text-[11px] font-bold uppercase tracking-[0.08em] font-serif ${theme.headText}`}>
+          <span key={col} className={`text-[10px] font-bold uppercase tracking-[0.14em] ${theme.headText}`}>
             {col}
           </span>
         ))}
@@ -146,88 +161,137 @@ const AppointmentTable: React.FC<AppointmentTableProps> = ({
         {paginatedAppointments.map(apt => {
           const cfg = statusConfig[apt.status] || statusConfig.pending
           const actions = getAppointmentActions(apt.status, actorRole)
+          const hasStatusOptions = Boolean(
+            (onConfirm && actions.canConfirm) ||
+            (onComplete && actions.canComplete) ||
+            (onCancel && actions.canCancel)
+          )
+          const isStatusOpen = openStatusId === apt._id
 
           return (
             <div
               key={apt._id}
-              className={`grid gap-4 px-6 py-3.5 border-b last:border-b-0 transition-colors items-center ${theme.row}`}
-              style={{ gridTemplateColumns: compact ? 'repeat(6, 1fr)' : 'repeat(8, 1fr)' }}
+              className={`grid gap-5 px-7 py-4 border-b last:border-b-0 transition-colors items-center ${theme.row}`}
+              style={{ gridTemplateColumns }}
             >
               <div>
-                <p className={`text-[13px] font-semibold m-0 font-serif ${theme.title}`}>{getCustomerName(apt.userID)}</p>
+                <p className={`text-[14px] font-semibold m-0 ${theme.title}`}>{getCustomerName(apt.userID)}</p>
               </div>
 
               <div>
-                <p className={`text-[13px] m-0 font-serif ${theme.body}`}>{getStaffName(apt.staffID)}</p>
+                <p className={`text-[13px] m-0 ${theme.body}`}>{getStaffName(apt.staffID)}</p>
               </div>
 
               <div>
-                <p className={`text-[13px] m-0 font-serif capitalize ${theme.body}`}>{getServiceName(apt.services)}</p>
+                <p className={`text-[13px] m-0 leading-[1.35] ${theme.body}`}>{getServiceName(apt.services)}</p>
               </div>
 
               {!compact && (
                 <div>
-                  <p className={`text-[13px] font-semibold m-0 font-serif ${theme.price}`}>Rs {getServicePrice(apt.services).toLocaleString()}</p>
+                  <p className={`text-[13px] font-semibold m-0 ${theme.price}`}>Rs {getServicePrice(apt.services).toLocaleString()}</p>
                 </div>
               )}
 
               <div>
-                <p className={`text-[13px] m-0 font-serif ${theme.body}`}>{formatDateShort(apt.appointmentDate)}</p>
+                <p className={`text-[13px] m-0 ${theme.body}`}>{formatDateShort(apt.appointmentDate)}</p>
               </div>
 
               <div>
-                <p className={`text-[13px] m-0 font-serif ${theme.body}`}>
+                <p className={`text-[13px] m-0 ${theme.body}`}>
                   {formatTime(apt.startTime)} - {formatTime(apt.endTime)}
                 </p>
               </div>
 
-              <div>
-                <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full ${cfg.bg} ${cfg.text}`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
-                  {cfg.label}
-                </span>
+              <div className="relative flex items-center min-w-0">
+                {hasStatusOptions ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setOpenStatusId(current => current === apt._id ? null : apt._id)}
+                      className={`inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-[11px] font-semibold border whitespace-nowrap transition-all ${cfg.bg} ${cfg.text} ${
+                        isStatusOpen ? 'ring-2 ring-[#C49A7A]/15' : ''
+                      }`}
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+                      {cfg.label}
+                      <ChevronDown size={14} strokeWidth={2.2} className={`transition-transform ${isStatusOpen ? 'rotate-180' : ''}`} />
+                    </button>
+                    {isStatusOpen && (
+                      <div className="absolute top-full left-0 z-20 mt-2 min-w-[150px] rounded-2xl border border-[#EAD8CB] bg-white p-2 shadow-[0_16px_36px_rgba(47,39,35,0.12)]">
+                        {onConfirm && actions.canConfirm && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onConfirm(apt._id)
+                              setOpenStatusId(null)
+                            }}
+                            className="flex w-full items-center gap-2 rounded-xl border border-transparent bg-white px-3 py-2 text-left text-[12px] font-medium text-[#2F9E44] cursor-pointer hover:bg-[#EAF8EC]"
+                          >
+                            <Check size={15} strokeWidth={2.2} />
+                            Confirm
+                          </button>
+                        )}
+                        {onComplete && actions.canComplete && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onComplete(apt._id)
+                              setOpenStatusId(null)
+                            }}
+                            className="flex w-full items-center gap-2 rounded-xl border border-transparent bg-white px-3 py-2 text-left text-[12px] font-medium text-[#1E6AD6] cursor-pointer hover:bg-[#EAF3FF]"
+                          >
+                            <CheckCheck size={15} strokeWidth={2.2} />
+                            Complete
+                          </button>
+                        )}
+                        {onCancel && actions.canCancel && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onCancel(apt._id)
+                              setOpenStatusId(null)
+                            }}
+                            className="flex w-full items-center gap-2 rounded-xl border border-transparent bg-white px-3 py-2 text-left text-[12px] font-medium text-[#D9485F] cursor-pointer hover:bg-[#FFF0F1]"
+                          >
+                            <X size={15} strokeWidth={2.2} />
+                            Cancel
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <span className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-[11px] font-semibold border whitespace-nowrap ${cfg.bg} ${cfg.text}`}>
+                    {apt.status === 'cancelled' ? <X size={14} strokeWidth={2.2} /> : <CheckCheck size={14} strokeWidth={2.2} />}
+                    {actions.finalLabel || cfg.label}
+                  </span>
+                )}
               </div>
 
               {showActions && !compact && (
-                <div className="flex gap-1.5 items-center justify-end">
-                  {onConfirm && actions.canConfirm && (
+                <div className="flex items-center gap-1.5 justify-start xl:justify-end min-w-0 justify-self-start xl:justify-self-end">
+                  {onEdit && (
                     <button
-                      onClick={() => onConfirm(apt._id)}
-                      className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-[#E8F5E9] text-[#4CAF50] border border-[#4CAF50]/30 cursor-pointer hover:bg-[#4CAF50] hover:text-white transition-all font-serif"
-                      title="Confirm appointment"
+                      onClick={() => onEdit(apt)}
+                      className={`${iconButtonBase} bg-white text-[#7B6657] border-[#DCCDBF] hover:bg-[#F5EEE8]`}
+                      title="Edit appointment"
+                      aria-label="Edit appointment"
                     >
-                      Confirm
+                      <Pencil size={15} strokeWidth={2.2} />
                     </button>
                   )}
-                  {onComplete && actions.canComplete && (
+                  {onDelete && (
                     <button
-                      onClick={() => onComplete(apt._id)}
-                      className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-[#E3F2FD] text-[#1565C0] border border-[#1565C0]/30 cursor-pointer hover:bg-[#1565C0] hover:text-white transition-all font-serif"
-                      title="Complete appointment"
+                      onClick={() => onDelete(apt)}
+                      className={`${iconButtonBase} bg-white text-[#C54040] border-[#F0C1C1] hover:bg-[#FFF0F0]`}
+                      title="Delete appointment"
+                      aria-label="Delete appointment"
                     >
-                      Complete
+                      <Trash2 size={15} strokeWidth={2.2} />
                     </button>
                   )}
-                  {onCancel && actions.canCancel && (
-                    <button
-                      onClick={() => onCancel(apt._id)}
-                      className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-[#FFEBEE] text-[#E74C3C] border border-[#E74C3C]/30 cursor-pointer hover:bg-[#E74C3C] hover:text-white transition-all font-serif"
-                      title="Cancel appointment"
-                    >
-                      Cancel
-                    </button>
-                  )}
-                  {!actions.canConfirm && !actions.canCancel && !actions.canComplete && actions.isReadOnly && (
-                    <span className={`rounded-lg px-2.5 py-1.5 text-[11px] font-semibold border font-serif ${
-                      actions.finalLabel === 'Cancelled'
-                        ? 'bg-[#FFEBEE] text-[#E53935] border-[#E53935]/20'
-                        : 'bg-[#EEF7FF] text-[#1565C0] border-[#1565C0]/20'
-                    }`}>
-                      {actions.finalLabel || 'Done'}
-                    </span>
-                  )}
-                  {!actions.canConfirm && !actions.canCancel && !actions.canComplete && !actions.isReadOnly && (
-                    <span className="text-[11px] font-semibold text-[#B8AAA2] font-serif">No actions</span>
+                  {!onEdit && !onDelete && (
+                    <span className="text-[11px] font-semibold text-[#B8AAA2]">No actions</span>
                   )}
                 </div>
               )}
