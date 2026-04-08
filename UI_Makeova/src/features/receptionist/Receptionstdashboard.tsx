@@ -4,7 +4,7 @@ import ReceptionistLayout from './Receptionistlayout'
 import AppointmentForm from '../appointments/AppointmentForm'
 import AppointmentTable from '../appointments/AppointmentTable'
 import ProviderScheduleCalendar from '../appointments/ProviderScheduleCalendar'
-import { createUser, filterUsersByRole, getAllUsers } from '@/api/Userapi'
+import { createUser, getAllUsers } from '@/api/Userapi'
 import UserForm from '../admin/users/Userform'
 import {
   createLeave,
@@ -35,6 +35,8 @@ const LEAVE_TYPES: { value: LeaveType; label: string; desc: string }[] = [
   { value: 'half_day_morning', label: 'Morning Half', desc: '9:00 AM - 1:00 PM' },
   { value: 'half_day_evening', label: 'Evening Half', desc: '1:00 PM - 8:00 PM' },
 ]
+
+const USER_FETCH_LIMIT = 1000
 
 const toInputDate = (date = new Date()) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
@@ -175,16 +177,16 @@ const ReceptionistDashboard: React.FC = () => {
     try {
       setLoading(true)
       setLeaveLoading(true)
-      const [allAppointments, allLeaves, allUsers, receptionistLeaves] = await Promise.all([
+      const [allAppointments, allLeaves, staffUsers, receptionistLeaves] = await Promise.all([
         getAllAppointments({ page: 1, limit: 200 }),
         getAllLeaves({ page: 1, limit: 100 }),
-        getAllUsers({ page: 1, limit: 500 }),
+        getAllUsers({ page: 1, limit: USER_FETCH_LIMIT, role: 'staff' }),
         currentUser?._id ? getLeavesByStaff(currentUser._id, { page: 1, limit: 100 }) : Promise.resolve({ items: [], pagination: { currentPage: 1, perPage: 10, totalItems: 0, totalPages: 1, hasNextPage: false, hasPreviousPage: false } }),
       ])
 
       const appointmentItems = allAppointments.items
       const leaveItems = allLeaves.items
-      const userItems = allUsers.items
+      const providerList = staffUsers.items
       const receptionistLeaveItems = receptionistLeaves.items
 
       const today = new Date().toDateString()
@@ -192,7 +194,6 @@ const ReceptionistDashboard: React.FC = () => {
         new Date(apt.appointmentDate).toDateString() === today
       )
 
-      const providerList = filterUsersByRole(userItems, 'staff')
       const staffIds = new Set(providerList.map(user => user._id))
 
       setAppointments(todayAppts)
@@ -475,6 +476,7 @@ const ReceptionistDashboard: React.FC = () => {
           onCancel={cancelAppt}
           onConfirm={confirmAppt}
           onComplete={completeAppt}
+          onActionBlocked={message => showToast(message, 'info')}
           onDelete={handleDeleteAppointment}
           showActions={true}
           actorRole="receptionist"

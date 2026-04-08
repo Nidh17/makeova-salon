@@ -265,6 +265,7 @@ const AdminAppointmentCalendar: React.FC = () => {
               onCancel={id => handleStatusChange(id, 'cancelled')}
               onConfirm={id => handleStatusChange(id, 'confirmed')}
               onComplete={id => handleStatusChange(id, 'completed')}
+              onActionBlocked={message => showToast(message, 'error')}
               onEdit={appointment => {
                 setEditingAppointment(appointment)
                 setShowBook(true)

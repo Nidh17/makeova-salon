@@ -1,5 +1,5 @@
 import React from 'react'
-import { Check, CheckCheck, ChevronDown, Pencil, Trash2, X } from 'lucide-react'
+import { ArrowDown, ArrowUp, Check, CheckCheck, ChevronDown, Pencil, Trash2, X } from 'lucide-react'
 import type { IAppointment } from '@/api/AppointmentsApi'
 import type { PaginationMeta } from '@/types'
 import {
@@ -22,6 +22,7 @@ interface AppointmentTableProps {
   onCancel?: (id: string) => void
   onConfirm?: (id: string) => void
   onComplete?: (id: string) => void
+  onActionBlocked?: (message: string) => void
   onEdit?: (appointment: IAppointment) => void
   onDelete?: (appointment: IAppointment) => void
   compact?: boolean
@@ -73,6 +74,7 @@ const AppointmentTable: React.FC<AppointmentTableProps> = ({
   onCancel,
   onConfirm,
   onComplete,
+  onActionBlocked,
   onEdit,
   onDelete,
   compact = false,
@@ -88,6 +90,8 @@ const AppointmentTable: React.FC<AppointmentTableProps> = ({
 }) => {
   const [internalPage, setInternalPage] = React.useState(1)
   const [openStatusId, setOpenStatusId] = React.useState<string | null>(null)
+  const [timeSort, setTimeSort] = React.useState<'asc' | 'desc'>('desc')
+  const statusDropdownRef = React.useRef<HTMLDivElement | null>(null)
   const isControlled = Boolean(pagination && controlledPage !== undefined && onPageChange)
   const currentPage: number = isControlled ? controlledPage ?? 1 : internalPage
 
@@ -97,14 +101,24 @@ const AppointmentTable: React.FC<AppointmentTableProps> = ({
     }
   }, [appointments.length, compact, isControlled, showActions, pageSize])
 
+  const sortedAppointments = React.useMemo(() => {
+    const sorted = [...appointments]
+    sorted.sort((a, b) => {
+      const first = new Date(a.startTime).getTime()
+      const second = new Date(b.startTime).getTime()
+      return timeSort === 'asc' ? first - second : second - first
+    })
+    return sorted
+  }, [appointments, timeSort])
+
   const totalPages = isControlled
     ? Math.max(1, pagination?.totalPages || 1)
     : Math.max(1, Math.ceil(appointments.length / pageSize))
   const totalItems = isControlled ? pagination?.totalItems || appointments.length : appointments.length
   const effectivePageSize = isControlled ? pagination?.perPage || pageSize : pageSize
   const paginatedAppointments = isControlled
-    ? appointments
-    : appointments.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+    ? sortedAppointments
+    : sortedAppointments.slice((currentPage - 1) * pageSize, currentPage * pageSize)
   const theme = TABLE_THEME[variant]
 
   React.useEffect(() => {
@@ -116,6 +130,19 @@ const AppointmentTable: React.FC<AppointmentTableProps> = ({
   React.useEffect(() => {
     setOpenStatusId(null)
   }, [appointments])
+
+  React.useEffect(() => {
+    if (!openStatusId) return
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (statusDropdownRef.current && !statusDropdownRef.current.contains(event.target as Node)) {
+        setOpenStatusId(null)
+      }
+    }
+
+    document.addEventListener('mousedown', handlePointerDown)
+    return () => document.removeEventListener('mousedown', handlePointerDown)
+  }, [openStatusId])
 
   if (loading) {
     return <TableSkeleton columns={compact ? 6 : 8} rows={5} compact={compact} />
@@ -144,6 +171,20 @@ const AppointmentTable: React.FC<AppointmentTableProps> = ({
     ? 'repeat(6, minmax(0, 1fr))'
     : 'minmax(180px,1.3fr) minmax(150px,1fr) minmax(160px,1.1fr) minmax(95px,0.7fr) minmax(92px,0.7fr) minmax(150px,1fr) minmax(170px,1.1fr) minmax(96px,0.55fr)'
 
+  const handleCompleteClick = (appointment: IAppointment) => {
+    const endTime = new Date(appointment.endTime).getTime()
+    const now = Date.now()
+
+    if (!Number.isNaN(endTime) && now < endTime) {
+      onActionBlocked?.('Service is in progress. It will finish soon.')
+      setOpenStatusId(null)
+      return
+    }
+
+    onComplete?.(appointment._id)
+    setOpenStatusId(null)
+  }
+
   return (
     <div className={`bg-white rounded-[24px] overflow-hidden ${theme.card}`}>
       <div
@@ -151,9 +192,23 @@ const AppointmentTable: React.FC<AppointmentTableProps> = ({
         style={{ gridTemplateColumns }}
       >
         {columns.map(col => (
-          <span key={col} className={`text-[10px] font-bold uppercase tracking-[0.14em] ${theme.headText}`}>
-            {col}
-          </span>
+          col === 'Time' ? (
+            <button
+              key={col}
+              type="button"
+              onClick={() => setTimeSort(current => current === 'asc' ? 'desc' : 'asc')}
+              className={`inline-flex items-center gap-1.5 border-0 bg-transparent p-0 text-left text-[10px] font-bold uppercase tracking-[0.14em] cursor-pointer ${theme.headText}`}
+              title={`Sort by time ${timeSort === 'asc' ? 'descending' : 'ascending'}`}
+              aria-label={`Sort by time ${timeSort === 'asc' ? 'descending' : 'ascending'}`}
+            >
+              <span>{col}</span>
+              {timeSort === 'asc' ? <ArrowUp size={12} strokeWidth={2.4} /> : <ArrowDown size={12} strokeWidth={2.4} />}
+            </button>
+          ) : (
+            <span key={col} className={`text-[10px] font-bold uppercase tracking-[0.14em] ${theme.headText}`}>
+              {col}
+            </span>
+          )
         ))}
       </div>
 
@@ -202,7 +257,7 @@ const AppointmentTable: React.FC<AppointmentTableProps> = ({
                 </p>
               </div>
 
-              <div className="relative flex items-center min-w-0">
+              <div className="relative flex items-center min-w-0" ref={isStatusOpen ? statusDropdownRef : null}>
                 {hasStatusOptions ? (
                   <>
                     <button
@@ -235,8 +290,7 @@ const AppointmentTable: React.FC<AppointmentTableProps> = ({
                           <button
                             type="button"
                             onClick={() => {
-                              onComplete(apt._id)
-                              setOpenStatusId(null)
+                              handleCompleteClick(apt)
                             }}
                             className="flex w-full items-center gap-2 rounded-xl border border-transparent bg-white px-3 py-2 text-left text-[12px] font-medium text-[#1E6AD6] cursor-pointer hover:bg-[#EAF3FF]"
                           >

@@ -239,7 +239,7 @@ const ManageServices: React.FC = () => {
               <h1 className="text-[20px] font-bold text-[#2d2d2d] m-0 font-serif">Manage Services</h1>
               {refreshing && <span className="text-[11px] text-[#C49A7A] font-serif">Updating...</span>}
             </div>
-            <p className="text-[12px] text-[#aaa] mt-0.5 mb-0">{stats.total} services · {stats.active} active</p>
+            <p className="text-[12px] text-[#aaa] mt-0.5 mb-0">{stats.total} services  {stats.active} active</p>
           </div>
           <button
             onClick={() => setShowCreate(true)}

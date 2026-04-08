@@ -13,7 +13,7 @@ import {
   STATUS_STYLE,
 } from '@/api/AppointmentsApi'
 import ProviderScheduleCalendar from '@/features/appointments/ProviderScheduleCalendar'
-import { filterUsersByRole, getAllUsers } from '@/api/Userapi'
+import { getAllUsers } from '@/api/Userapi'
 import { getAllServices } from '@/api/services/servicesApi'
 import Pagination from '@/components/shared/Pagination'
 import { SkeletonBlock, StatCardSkeletons, TableSkeleton } from '@/components/shared/Skeleton'
@@ -25,6 +25,8 @@ const LEAVE_STATUS_STYLE = {
   approved: 'bg-[#E8F5E9] text-[#4CAF50]',
   rejected: 'bg-[#FFEBEE] text-[#E53935]',
 } as const
+
+const USER_FETCH_LIMIT = 1000
 
 const formatLeaveType = (type: ILeave['type']) =>
   type
@@ -93,19 +95,21 @@ const AdminDashboard: React.FC = () => {
     setError('')
 
     try {
-      const [appointments, users, services, leaves] = await Promise.all([
+      const [appointments, staffUsers, receptionistUsersResponse, users, services, leaves] = await Promise.all([
         getAllAppointments({ page: 1, limit: 200 }),
-        getAllUsers({ page: 1, limit: 500 }),
+        getAllUsers({ page: 1, limit: USER_FETCH_LIMIT, role: 'staff' }),
+        getAllUsers({ page: 1, limit: USER_FETCH_LIMIT, role: 'receptionist' }),
+        getAllUsers({ page: 1, limit: USER_FETCH_LIMIT }),
         getAllServices({ page: 1, limit: 100 }),
         getAllLeaves({ page: 1, limit: 100 }),
       ])
 
       const appointmentItems = appointments.items
+      const allStaffItems = staffUsers.items
+      const receptionistUsers = receptionistUsersResponse.items
       const userItems = users.items
       const serviceItems = services.items
       const leaveItems = leaves.items
-      const allStaffItems = filterUsersByRole(userItems, 'staff')
-      const receptionistUsers = filterUsersByRole(userItems, 'receptionist')
 
       const userLookup = new Map(userItems.map(user => [user._id, user]))
 
@@ -454,7 +458,7 @@ const AdminDashboard: React.FC = () => {
             </div>
           ) : (
             <>
-              <div className="table-scroll-area bg-[#ffffff]">
+              <div className="table-scroll-area ">
                 <table className="w-full border-collapse">
                   <thead>
                     <tr className="table-scroll-head bg-[#f8eee5]">

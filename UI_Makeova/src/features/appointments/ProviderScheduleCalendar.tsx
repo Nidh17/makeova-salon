@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { IAppointment, ILeave, TIME_SLOTS, formatTime } from '@/api/AppointmentsApi'
 import { IUser } from '@/types'
 import { BUSINESS_HOUR_END, BUSINESS_HOUR_START, isOnLeave, isWorkingOnDate } from './appointmentUtils'
+import { ArrowDown, ArrowUp } from 'lucide-react'
 
 const DAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -111,6 +112,7 @@ const ProviderScheduleCalendar: React.FC<ProviderScheduleCalendarProps> = ({
   const today = new Date()
   const [weekBase, setWeekBase] = useState(new Date(today))
   const [selectedProviderId, setSelectedProviderId] = useState('')
+  const [leaveSortOrder, setLeaveSortOrder] = useState<'asc' | 'desc'>('desc')
 
   const sortedProviders = useMemo(
     () => [...providers].sort((a, b) => a.name.localeCompare(b.name)),
@@ -196,14 +198,16 @@ const ProviderScheduleCalendar: React.FC<ProviderScheduleCalendarProps> = ({
           return userId ? trackedLeaveIds.has(userId) : false
         })
         .sort((a, b) => {
-          const dateDiff = new Date(a.date).getTime() - new Date(b.date).getTime()
+          const dateDiff = leaveSortOrder === 'asc'
+            ? new Date(a.date).getTime() - new Date(b.date).getTime()
+            : new Date(b.date).getTime() - new Date(a.date).getTime()
           if (dateDiff !== 0) return dateDiff
           if (a.status === b.status) return 0
           if (a.status === 'pending') return -1
           if (b.status === 'pending') return 1
           return 0
         }),
-    [leaves, trackedLeaveIds]
+    [leaveSortOrder, leaves, trackedLeaveIds]
   )
 
   const selectedProviderWeekCount = providerAppointments.length
@@ -315,7 +319,7 @@ const ProviderScheduleCalendar: React.FC<ProviderScheduleCalendarProps> = ({
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto plain-scroll-area">
           <div style={{ minWidth: `${TIME_COL_WIDTH + 7 * 170}px` }}>
             <div
               className="grid border-b border-[#E5ECE7]"
@@ -433,10 +437,25 @@ const ProviderScheduleCalendar: React.FC<ProviderScheduleCalendarProps> = ({
 
       <div className="rounded-[28px] border border-[#E8DED6] bg-white shadow-[0_8px_32px_rgba(120,92,74,0.06)]">
         <div className="border-b border-[#EFE6DE] px-6 py-5">
-          <h3 className="m-0 text-[16px] font-bold text-[#2d2d2d] font-serif">{leaveScopeLabel}</h3>
-          <p className="m-0 mt-1 text-[12px] text-[#8D7B70] font-serif">
-            {leaveScope === 'team' ? 'Providers and receptionists leave tracker' : 'Provider leave tracker'}
-          </p>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h3 className="m-0 text-[16px] font-bold text-[#2d2d2d] font-serif">{leaveScopeLabel}</h3>
+              <p className="m-0 mt-1 text-[12px] text-[#8D7B70] font-serif">
+                {leaveScope === 'team' ? 'Providers and receptionists leave tracker' : 'Provider leave tracker'}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setLeaveSortOrder(current => current === 'asc' ? 'desc' : 'asc')}
+              className="inline-flex items-center gap-2 rounded-full border border-[#E8DED6] bg-white px-3 py-2 text-[11px] font-semibold text-[#6D625A] cursor-pointer transition-colors hover:bg-[#FCF8F5]"
+              title={`Sort leave dates ${leaveSortOrder === 'desc' ? 'ascending' : 'descending'}`}
+              aria-label={`Sort leave dates ${leaveSortOrder === 'desc' ? 'ascending' : 'descending'}`}
+            >
+              <span>{leaveSortOrder === 'desc' ? 'Latest First' : 'Earliest First'}</span>
+              {leaveSortOrder === 'desc' ? <ArrowDown size={13} strokeWidth={2.2} /> : <ArrowUp size={13} strokeWidth={2.2} />}
+            </button>
+          </div>
         </div>
 
         <div className="px-6 py-5">
@@ -453,7 +472,7 @@ const ProviderScheduleCalendar: React.FC<ProviderScheduleCalendarProps> = ({
             </div>
           </div>
         ) : (
-          <div className="max-h-[760px] overflow-y-auto px-3 pb-4">
+          <div className="max-h-[760px] overflow-y-auto plain-scroll-area px-3 pb-4">
             <div className="space-y-3">
               {visibleLeaves.slice(0, 10).map(leave => {
                 const userId = getLeaveUserId(leave.staffId)

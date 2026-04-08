@@ -18,6 +18,7 @@ import {
 import Pagination from '@/components/shared/Pagination'
 import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from '@/utils/pagination'
 import { isWorkingOnDate } from '@/features/appointments/appointmentUtils'
+import { ArrowDown, ArrowUp } from 'lucide-react'
 
 const toStr = (d: Date): string =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -188,40 +189,66 @@ const LeaveModal: React.FC<LeaveModalProps> = ({ staffId, onClose, onSuccess }) 
   )
 }
 
-const AppointmentTable: React.FC<{ appointments: IAppointment[] }> = ({ appointments }) => (
-  <div className="overflow-x-auto">
-    <table className="min-w-full text-left">
-      <thead className="bg-[#F6FBF7]">
-        <tr>
-          {['Time', 'Client', 'Service', 'Date', 'Amount', 'Status'].map(header => (
-            <th key={header} className="px-6 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#7AC49A]">
-              {header}
+const AppointmentTable: React.FC<{ appointments: IAppointment[] }> = ({ appointments }) => {
+  const [timeSort, setTimeSort] = useState<'asc' | 'desc'>('desc')
+
+  const sortedAppointments = useMemo(() => {
+    const sorted = [...appointments]
+    sorted.sort((a, b) => {
+      const first = new Date(a.startTime).getTime()
+      const second = new Date(b.startTime).getTime()
+      return timeSort === 'asc' ? first - second : second - first
+    })
+    return sorted
+  }, [appointments, timeSort])
+
+  return (
+    <div className="overflow-x-auto plain-scroll-area">
+      <table className="min-w-full text-left">
+        <thead className="bg-[#F6FBF7]">
+          <tr>
+            <th className="px-6 py-3">
+              <button
+                type="button"
+                onClick={() => setTimeSort(current => current === 'asc' ? 'desc' : 'asc')}
+                className="inline-flex items-center gap-1.5 border-0 bg-transparent p-0 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#7AC49A] cursor-pointer"
+                title={`Sort by time ${timeSort === 'asc' ? 'descending' : 'ascending'}`}
+                aria-label={`Sort by time ${timeSort === 'asc' ? 'descending' : 'ascending'}`}
+              >
+                <span>Time</span>
+                {timeSort === 'asc' ? <ArrowUp size={12} strokeWidth={2.4} /> : <ArrowDown size={12} strokeWidth={2.4} />}
+              </button>
             </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {appointments.map(apt => {
-          const statusStyle = STATUS_STYLE[apt.status] ?? STATUS_STYLE.pending
-          return (
-            <tr key={apt._id} className="border-t border-[#E8F5E9] hover:bg-[#F0FAF4] transition-colors">
-              <td className="px-6 py-4 text-[13px] font-bold text-[#7AC49A] font-serif whitespace-nowrap">{formatTime(apt.startTime)}</td>
-              <td className="px-6 py-4 text-[13px] text-[#2d2d2d] font-serif">{safeGet(apt.userID, 'name')}</td>
-              <td className="px-6 py-4 text-[12px] text-[#666]">{safeGet(apt.services, 'name')}</td>
-              <td className="px-6 py-4 text-[12px] text-[#666] whitespace-nowrap">{formatDate(apt.appointmentDate)}</td>
-              <td className="px-6 py-4 text-[13px] font-bold text-[#2d2d2d] font-serif whitespace-nowrap">Rs {apt.totalPrice.toLocaleString('en-IN')}</td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <span className={`inline-flex rounded-full px-3 py-1 text-[11px] font-semibold capitalize ${statusStyle.bg} ${statusStyle.text}`}>
-                  {apt.status}
-                </span>
-              </td>
-            </tr>
-          )
-        })}
-      </tbody>
-    </table>
-  </div>
-)
+            {['Client', 'Service', 'Date', 'Amount', 'Status'].map(header => (
+              <th key={header} className="px-6 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#7AC49A]">
+                {header}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {sortedAppointments.map(apt => {
+            const statusStyle = STATUS_STYLE[apt.status] ?? STATUS_STYLE.pending
+            return (
+              <tr key={apt._id} className="border-t border-[#E8F5E9] hover:bg-[#F0FAF4] transition-colors">
+                <td className="px-6 py-4 text-[13px] font-bold text-[#7AC49A] font-serif whitespace-nowrap">{formatTime(apt.startTime)}</td>
+                <td className="px-6 py-4 text-[13px] text-[#2d2d2d] font-serif">{safeGet(apt.userID, 'name')}</td>
+                <td className="px-6 py-4 text-[12px] text-[#666]">{safeGet(apt.services, 'name')}</td>
+                <td className="px-6 py-4 text-[12px] text-[#666] whitespace-nowrap">{formatDate(apt.appointmentDate)}</td>
+                <td className="px-6 py-4 text-[13px] font-bold text-[#2d2d2d] font-serif whitespace-nowrap">Rs {apt.totalPrice.toLocaleString('en-IN')}</td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className={`inline-flex rounded-full px-3 py-1 text-[11px] font-semibold capitalize ${statusStyle.bg} ${statusStyle.text}`}>
+                    {apt.status}
+                  </span>
+                </td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
+    </div>
+  )
+}
 
 const StaffDashboard: React.FC = () => {
   const navigate = useNavigate()
@@ -263,10 +290,7 @@ const StaffDashboard: React.FC = () => {
   }, [fetchData])
 
   const todayAppointments = useMemo(
-    () =>
-      appointments
-        .filter(a => new Date(a.appointmentDate).toDateString() === today.toDateString())
-        .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()),
+    () => appointments.filter(a => new Date(a.appointmentDate).toDateString() === today.toDateString()),
     [appointments, today]
   )
 

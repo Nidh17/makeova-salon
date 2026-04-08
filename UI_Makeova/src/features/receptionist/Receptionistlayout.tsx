@@ -245,7 +245,7 @@ const ReceptionistLayout: React.FC<ReceptionistLayoutProps> = ({ children }) => 
                 marginBottom: 12,
               }}
             >
-              <p style={{ margin: 0, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#bc97a7', fontFamily: '"Inter", system-ui, sans-serif' }}>Desk Account</p>
+              <p style={{ margin: 0, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#bc97a7', fontFamily: '"Inter", system-ui, sans-serif' }}>Receptionist Account</p>
               <p style={{ margin: '7px 0 0', fontSize: 15, color: '#fff7f2', fontWeight: 700 }}>{user?.name ?? 'Receptionist'}</p>
             </div>
           )}
@@ -328,7 +328,7 @@ const ReceptionistLayout: React.FC<ReceptionistLayoutProps> = ({ children }) => 
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             <div style={{ textAlign: 'right' }}>
-              <p style={{ margin: 0, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: shellStyles.muted, fontFamily: '"Inter", system-ui, sans-serif' }}>Guest Care</p>
+              <p style={{ margin: 0, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: shellStyles.muted, fontFamily: '"Inter", system-ui, sans-serif' }}>Receptionist </p>
               <p style={{ margin: '4px 0 0', fontSize: 14, color: shellStyles.text, fontWeight: 700 }}>{user?.name ?? 'Receptionist'}</p>
             </div>
             <div

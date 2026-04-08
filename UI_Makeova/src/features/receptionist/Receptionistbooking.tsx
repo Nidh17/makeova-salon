@@ -141,6 +141,7 @@ const ReceptionistBooking: React.FC = () => {
         onCancel={cancelAppt}
         onConfirm={confirmAppt}
         onComplete={completeAppt}
+        onActionBlocked={message => showToast(message, 'info')}
         onEdit={appointment => {
           setEditingAppointment(appointment)
           setShowForm(true)
