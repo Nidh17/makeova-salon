@@ -91,10 +91,13 @@ const AppointmentTable: React.FC<AppointmentTableProps> = ({
   const [internalPage, setInternalPage] = React.useState(1)
   const [openStatusId, setOpenStatusId] = React.useState<string | null>(null)
   const [timeSort, setTimeSort] = React.useState<'asc' | 'desc'>('desc')
+  const [deleteTarget, setDeleteTarget] = React.useState<IAppointment | null>(null)
   const statusDropdownRef = React.useRef<HTMLDivElement | null>(null)
   const isControlled = Boolean(pagination && controlledPage !== undefined && onPageChange)
   const currentPage: number = isControlled ? controlledPage ?? 1 : internalPage
 
+
+  
   React.useEffect(() => {
     if (!isControlled) {
       setInternalPage(1)
@@ -130,6 +133,12 @@ const AppointmentTable: React.FC<AppointmentTableProps> = ({
   React.useEffect(() => {
     setOpenStatusId(null)
   }, [appointments])
+
+  React.useEffect(() => {
+    if (deleteTarget && !appointments.some(item => item._id === deleteTarget._id)) {
+      setDeleteTarget(null)
+    }
+  }, [appointments, deleteTarget])
 
   React.useEffect(() => {
     if (!openStatusId) return
@@ -183,6 +192,12 @@ const AppointmentTable: React.FC<AppointmentTableProps> = ({
 
     onComplete?.(appointment._id)
     setOpenStatusId(null)
+  }
+
+  const handleDeleteConfirm = () => {
+    if (!deleteTarget || !onDelete) return
+    onDelete(deleteTarget)
+    setDeleteTarget(null)
   }
 
   return (
@@ -336,7 +351,7 @@ const AppointmentTable: React.FC<AppointmentTableProps> = ({
                   )}
                   {onDelete && (
                     <button
-                      onClick={() => onDelete(apt)}
+                      onClick={() => setDeleteTarget(apt)}
                       className={`${iconButtonBase} bg-white text-[#C54040] border-[#F0C1C1] hover:bg-[#FFF0F0]`}
                       title="Delete appointment"
                       aria-label="Delete appointment"
@@ -365,6 +380,41 @@ const AppointmentTable: React.FC<AppointmentTableProps> = ({
         pageSizeOptions={pageSizeOptions}
         variant={theme.pagination}
       />
+
+      {deleteTarget && onDelete && (
+        <div className="fixed inset-0 z-[320] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/35 backdrop-blur-[2px]" onClick={() => setDeleteTarget(null)} />
+          <div className="relative w-full max-w-md rounded-[24px] border border-[#F0DDD5] bg-white p-6 shadow-[0_24px_64px_rgba(0,0,0,0.18)]">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#FFF0F0] text-[#C54040]">
+              <Trash2 size={20} strokeWidth={2.2} />
+            </div>
+            <h3 className="m-0 text-[18px] font-bold text-[#2d2d2d] font-serif">Delete Appointment?</h3>
+            <p className="m-0 mt-2 text-[13px] leading-[1.6] text-[#7B6D65] font-serif">
+              Do you want to delete this appointment for {getCustomerName(deleteTarget.userID)}?
+            </p>
+            <p className="m-0 mt-1 text-[12px] text-[#A18E84] font-serif">
+              This action cannot be undone.
+            </p>
+
+            <div className="mt-6 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setDeleteTarget(null)}
+                className="rounded-xl border border-[#E6D7CB] bg-white px-4 py-2.5 text-[12px] font-semibold text-[#7B6657] cursor-pointer transition-colors hover:bg-[#FCF7F3]"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteConfirm}
+                className="rounded-xl border border-[#F0C1C1] bg-[#FFF0F0] px-4 py-2.5 text-[12px] font-semibold text-[#C54040] cursor-pointer transition-colors hover:bg-[#FFE4E4]"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

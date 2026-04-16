@@ -88,13 +88,13 @@ class AppointmentService {
     }
   }
 
-  public async deleteAppointment(id: string) {
+  public async deleteAppointment(id: string, authUser?: any) {
     try {
       if (!id) {
         throw AppError.badRequest("Appointment id is required");
       }
 
-      return await appointmentFactory.deleteAppointment(id);
+      return await appointmentFactory.deleteAppointment(id, authUser);
     } catch (err: any) {
       logger.error(err.message);
       throw err;

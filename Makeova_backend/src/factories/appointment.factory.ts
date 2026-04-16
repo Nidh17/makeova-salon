@@ -12,6 +12,13 @@ import Leave from "../model/leave.schema.js";
 import paginationHelper from "../helper/pagination.helper.js";
 
 class AppointmentFactory {
+    private isAdminUser(authUser: any): boolean {
+        return Array.isArray(authUser?.role)
+            && authUser.role.some((role: any) =>
+                typeof role !== "string" && role?.name?.toLowerCase() === "admin"
+            );
+    }
+
     private async getAppointmentOrThrow(id: string) {
         const existingAppointment = await appointment.findById(id);
 
@@ -21,6 +28,7 @@ class AppointmentFactory {
 
         return existingAppointment;
     }
+
 
     private ensureAppointmentIsEditable(existingAppointment: { status: string }) {
         if (existingAppointment.status === "completed") {
@@ -245,8 +253,12 @@ public async updateAppointmentStatus(id: string, status: string) {
         }
     }
 
-    public async deleteAppointment(id: string) {
+    public async deleteAppointment(id: string, authUser?: any) {
         try {
+            if (!this.isAdminUser(authUser)) {
+                throw AppError.unauthorized("Only admin can delete appointments");
+            }
+
             const existingAppointment = await this.getAppointmentOrThrow(id);
             this.ensureAppointmentIsEditable(existingAppointment);
 
