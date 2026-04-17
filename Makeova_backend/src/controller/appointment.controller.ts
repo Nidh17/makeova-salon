@@ -110,7 +110,7 @@ class AppointmentController {
     try {
       const result = await appointmentService.deleteAppointment(
         req.params.id as string,
-        req.user as any,
+        req.user,
       );
       ResponseHandler.handleResponse(res, result);
     } catch (err: any) {

@@ -95,8 +95,6 @@ const AppointmentTable: React.FC<AppointmentTableProps> = ({
   const statusDropdownRef = React.useRef<HTMLDivElement | null>(null)
   const isControlled = Boolean(pagination && controlledPage !== undefined && onPageChange)
   const currentPage: number = isControlled ? controlledPage ?? 1 : internalPage
-
-
   
   React.useEffect(() => {
     if (!isControlled) {
